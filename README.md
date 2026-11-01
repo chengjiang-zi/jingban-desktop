@@ -22,9 +22,12 @@ Windows 10/11，安装 **Node.js 24+、Python 3 和 Git**，并加入 PATH。首
 ```powershell
 git clone https://github.com/chengjiang-zi/jingban-desktop.git
 cd jingban-desktop
-npm ci
+npm ci --ignore-scripts
+npm run setup
 npm start
 ```
+
+`setup` 安装桌面运行时并验证数据库预编译文件，避免安装工具误触发本机源码编译。
 
 启动后到“连接设置”：
 

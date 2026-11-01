@@ -13,12 +13,13 @@
     "renderer:patch": "python scripts/patch_renderer.py",
     "prestart": "node scripts/prepare-icons.cjs && npm run renderer:patch",
     "prepack": "node scripts/prepare-icons.cjs && npm run renderer:patch",
-    "postpack": "node scripts/set-app-icon.cjs"
+    "postpack": "node scripts/set-app-icon.cjs",
+    "setup": "node scripts/setup.cjs"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",
     "electron": "45.2.1",
-    "electron-builder": "26.0.12",
+    "electron-builder": "26.18.0",
     "rcedit": "5.0.2"
   },
   "dependencies": {
@@ -32,7 +33,7 @@
   },
   "build": {
     "appId": "local.desktop-companion",
-    "productName": "鲸伴",
+    "productName": "椴镐即",
     "files": [
       "desktop/**",
       "web/**",
@@ -52,5 +53,10 @@
   "author": "Desktop Companion contributors",
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "gh-pages": "6.3.0",
+    "sharp": "0.35.5",
+    "tar": "^7.5.21"
   }
 }
