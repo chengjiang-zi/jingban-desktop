@@ -48,7 +48,8 @@
       "target": "dir",
       "signAndEditExecutable": false,
       "icon": "web/assets/app.ico"
-    }
+    },
+    "executableName": "jingban"
   },
   "author": "Desktop Companion contributors",
   "engines": {

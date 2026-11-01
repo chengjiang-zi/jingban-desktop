@@ -15,7 +15,8 @@ if ((Test-Path -LiteralPath $asrPython) -and (Test-Path -LiteralPath (Join-Path 
   }
 }
 
-$packagedExe = Join-Path $projectRoot 'dist/win-unpacked/鲸伴.exe'
+$packagedExe = Join-Path $projectRoot 'dist/win-unpacked/jingban.exe'
+if (-not (Test-Path -LiteralPath $packagedExe)) { $packagedExe = Join-Path $projectRoot 'dist/win-unpacked/鲸伴.exe' }
 $developmentExe = Join-Path $projectRoot 'node_modules/electron/dist/electron.exe'
 $env:COMPANION_DATA = $localData
 if ((-not $Development) -and (Test-Path -LiteralPath $packagedExe)) {
