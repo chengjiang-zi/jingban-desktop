@@ -33,7 +33,7 @@
   },
   "build": {
     "appId": "local.desktop-companion",
-    "productName": "椴镐即",
+    "productName": "鲸伴",
     "files": [
       "desktop/**",
       "web/**",

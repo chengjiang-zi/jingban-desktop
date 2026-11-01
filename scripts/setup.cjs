@@ -8,7 +8,7 @@ if(process.platform!=='win32')throw new Error('This preview setup supports Windo
 function run(command,args,cwd=root){const result=spawnSync(command,args,{cwd,stdio:'inherit',windowsHide:true});if(result.error)throw result.error;if(result.status!==0)process.exit(result.status||1);}
 run(process.execPath,['node_modules/electron/install.js']);
 run(process.execPath,['script/install.js'],path.join(root,'node_modules/onnxruntime-node'));
-run(process.execPath,['install/check.js'],path.join(root,'node_modules/sharp'));
+require('sharp'); // Current sharp uses platform binaries supplied by npm.
 run(process.execPath,['scripts/prepare-icons.cjs']);
 run('python',['scripts/patch_renderer.py']);
 const db=new (require('better-sqlite3'))(':memory:');db.prepare('SELECT 1').get();db.close();
