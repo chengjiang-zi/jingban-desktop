@@ -1,5 +1,6 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('desktop',{
+  welcomeSeen:()=>ipcRenderer.invoke('desktop:welcome-seen'),
   state:()=>ipcRenderer.invoke('desktop:state'),
   onCursor:callback=>{const listener=(_event,value)=>callback(value);ipcRenderer.on('desktop:cursor',listener);return ()=>ipcRenderer.removeListener('desktop:cursor',listener);},
   mediaPermissions:patch=>ipcRenderer.invoke('desktop:media-permissions',patch),
@@ -13,6 +14,10 @@ contextBridge.exposeInMainWorld('desktop',{
   onPetChat:callback=>{const listener=(_event,request)=>callback(request);ipcRenderer.on('desktop:chat',listener);return ()=>ipcRenderer.removeListener('desktop:chat',listener);},
   passThrough:on=>ipcRenderer.invoke('desktop:pass-through',!!on),
   startup:on=>ipcRenderer.invoke('desktop:startup',!!on),
+  models:()=>ipcRenderer.invoke('desktop:models'),
+  selectModel:id=>ipcRenderer.invoke('desktop:select-model',id),
+  onModel:callback=>{const fn=(_e,v)=>callback(v);ipcRenderer.on('desktop:model',fn);return ()=>ipcRenderer.removeListener('desktop:model',fn);},
+  onHands:callback=>{const fn=(_e,v)=>callback(v);ipcRenderer.on('desktop:hands',fn);return ()=>ipcRenderer.removeListener('desktop:hands',fn);},
   chooseModel:()=>ipcRenderer.invoke('desktop:choose-model'),
   chooseCore:()=>ipcRenderer.invoke('desktop:choose-core'),
   sources:()=>ipcRenderer.invoke('desktop:sources'),

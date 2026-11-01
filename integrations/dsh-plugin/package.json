@@ -1,0 +1,24 @@
+{
+  "name": "dsh-jingban",
+  "version": "0.2.0-beta.1",
+  "description": "鲸伴桌宠与指定 DSH 会话的轻量桥接（Beta）",
+  "author": "澄江子",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.mjs",
+  "files": [
+    "*.mjs",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": ">=0.2.1-rc.5 <0.3.0-0"
+  }
+}

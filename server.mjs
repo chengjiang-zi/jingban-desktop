@@ -1,3 +1,4 @@
+import {createSharedMemory} from './lib/shared-memory.mjs';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -24,7 +25,9 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
   const store=await createConfigStore(directory,secrets);
   const memory=await createMemory(directory);let summaryJob=null,summaryError='';
   const mem0=createMem0(directory,store);
-  const inbox=[];let inputSequence=0;
+  const sharedMemory=await createSharedMemory(directory);
+  let dshStatus={at:0,sessionId:null,available:false},routeGeneration=0;
+  const inbox=[];const inputInstanceId=crypto.randomUUID();let inputSequence=0;
   async function summarize(force=false){
     if(summaryJob)return summaryJob;
     const snap=memory.get(),count=force?snap.messages.length:snap.messages.length-12;if(count<=snap.summarized)return;
@@ -37,7 +40,7 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
   const events=[];
   const emit=(type,data)=>{const event={id:++eventId,type,data,at:Date.now()};events.push(event);if(events.length>100)events.shift();for(const res of streams.values())res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);};
   const tasks=new Tasks(emit);
-  const capabilities=()=>({version:'0.1',commands:['speak','perform','show_message','set_task_status','stop'],tts:{configured:!!store.get().tts.baseUrl,stream:true,buffered:true,cancelReception:true},asr:{configured:!!store.get().asr.baseUrl,stream:false},chat:{configured:!!store.get().chat.baseUrl,stream:true,vision:store.get().chat.vision},memory:{mode:store.get().connectionMode==='external'?'external':store.get().memory,externalOwner:'caller'},connectionMode:store.get().connectionMode,inputs:{poll:'/v1/inputs',event:'agent_input'},avatar:{kind:'live2d',configured:!!store.get().model.entry,expressions:['neutral','happy','thinking','surprised']},clients:streams.size,players:renderers.size});
+  const capabilities=()=>({version:'0.1',commands:['speak','perform','show_message','set_task_status','stop'],tts:{configured:!!store.get().tts.baseUrl,stream:true,buffered:true,cancelReception:true},asr:{configured:!!store.get().asr.baseUrl,stream:false},chat:{configured:!!store.get().chat.baseUrl,stream:true,vision:store.get().chat.vision},memory:{mode:store.get().connectionMode==='external'?'external':store.get().memory,externalOwner:'caller'},connectionMode:store.get().connectionMode,inputs:{poll:'/v1/inputs',event:'agent_input'},sharedMemory:{bindings:'/v1/memory/bindings',context:'/v1/memory/context',sync:'/v1/memory/sync'},avatar:{kind:'live2d',configured:!!store.get().model.entry,expressions:['neutral','happy','thinking','surprised']},clients:streams.size,players:renderers.size});
   const server=http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
     try {
@@ -49,6 +52,23 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
       const external=store.get().integrationEnabled&&equal(req.headers.authorization,`Bearer ${store.token}`);
       if(api&&!ui&&!external)return json(res,401,{error:'需要本机访问令牌'});
       if(route.startsWith('/api/')&&!ui)return json(res,403,{error:'此接口仅供本机界面使用'});
+      if(req.method==='POST'&&route==='/v1/agent-status'){const b=await body(req,2000);dshStatus={at:Date.now(),sessionId:typeof b.sessionId==='string'?b.sessionId:null,available:b.available===true};return json(res,200,{connectionMode:store.get().connectionMode,generation:routeGeneration});}
+      if(req.method==='GET'&&route==='/api/connection-status'){const cfg=store.get(),main=sharedMemory.state().bindings.find(b=>b.main);return json(res,200,{mode:cfg.connectionMode,apiConfigured:!!(cfg.chat.baseUrl&&cfg.chat.model),enabled:cfg.integrationEnabled,primary:main?{sessionId:main.sessionId,title:main.title}:null,dshOnline:cfg.integrationEnabled&&Date.now()-dshStatus.at<10000&&dshStatus.available&&(!main||main.sessionId===dshStatus.sessionId)});}
+      if(req.method==='GET'&&(route==='/api/shared-memory'||route==='/v1/memory/bindings'))return json(res,200,{...sharedMemory.state(),connectionMode:store.get().connectionMode,generation:routeGeneration});
+      if(req.method==='POST'&&route==='/api/shared-memory'){const result=await sharedMemory.edit(await body(req,16000));emit('memory_bindings',{});return json(res,200,result);}
+      if(req.method==='POST'&&route==='/v1/memory/bindings/request'){const result=await sharedMemory.request(await body(req,4*1024*1024));emit('memory_bindings',{});return json(res,202,result);}
+      if(req.method==='POST'&&route==='/v1/memory/context'){
+        const b=await body(req,16000);const result=sharedMemory.search(b.sessionId,textInput(b.query,4000));
+        if(!result.bound)return json(res,200,result);
+        const local=memory.get();const facts=store.get().memory==='mem0'?await mem0.search(b.query):[];
+        return json(res,200,{...result,notes:local.notes.slice(-30).map(n=>n.text.slice(0,500)),summary:local.summary.slice(0,2000),facts:facts.map(f=>f.memory||f.text||'').filter(Boolean)});
+      }
+      if(req.method==='POST'&&route==='/v1/memory/sync'){
+        const b=await body(req,500000);const result=await sharedMemory.sync(b.sessionId,b.messages);
+        // Optional Mem0 extraction joins the same user memory bank. Failure never claims success.
+        if(store.get().memory==='mem0')for(const text of result.learn)void mem0.learnShared(text.slice(0,8000)).catch(()=>{});
+        const {learn,...publicResult}=result;return json(res,200,publicResult);
+      }
       if(req.method==='GET'&&route==='/api/bootstrap')return json(res,200,{config:store.public(),capabilities:capabilities(),integration:{baseUrl:origin,tokenFile:path.join(directory,'integration-token')},tasks:tasks.list()});
       if(req.method==='GET'&&route==='/api/understanding'){
         const cfg=store.get();if(!cfg.display.showUnderstanding)return json(res,200,{hidden:true});
@@ -57,7 +77,7 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
         try{return json(res,200,understandingScore(memory.get().notes,cfg.memory==='mem0'?await mem0.list():[]));}
         catch{return json(res,200,{score:null,reason:'记忆暂不可用'});}
       }
-      if(req.method==='POST'&&route==='/api/config'){const saved=await store.save(await body(req,64000));emit('config',{display:saved.display,connectionMode:saved.connectionMode});return json(res,200,saved);}
+      if(req.method==='POST'&&route==='/api/config'){const before=store.get().connectionMode;const saved=await store.save(await body(req,64000));if(saved.connectionMode!==before){routeGeneration++;tasks.stop();for(const c of active)c.abort();}emit('config',{display:saved.display,connectionMode:saved.connectionMode});return json(res,200,saved);}
       if(req.method==='GET'&&route==='/api/memory')return json(res,200,{...memory.get(),summarizing:!!summaryJob,summaryError});
       if(req.method==='GET'&&route==='/api/mem0/status')return json(res,200,mem0.status());
       if(req.method==='GET'&&route==='/api/mem0/export')return json(res,200,await mem0.export());
@@ -75,14 +95,14 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
         else throw new Error('不支持的 Mem0 操作');
         return json(res,200,{result,...mem0.status()});
       }
-      if(req.method==='POST'&&route==='/api/memory') {const b=await body(req,16000);if(b.action==='summarize'){await summarize(true);return json(res,200,{...memory.get(),summaryError});}const saved=await memory.edit(b.action,b);if(b.action==='clear_all')await mem0.clearAll();return json(res,200,saved);}
+      if(req.method==='POST'&&route==='/api/memory') {const b=await body(req,16000);if(b.action==='summarize'){await summarize(true);return json(res,200,{...memory.get(),summaryError});}const saved=await memory.edit(b.action,b);if(b.action==='clear_all'){await mem0.clearAll();await sharedMemory.clear();}return json(res,200,saved);}
       if(req.method==='POST'&&route==='/api/memory/turn'){const b=await body(req,150000);const cfg=store.get();if(cfg.connectionMode!=='direct'||!['basic','mem0'].includes(cfg.memory))return json(res,200,{skipped:true});const saved=await memory.append(b.user,b.assistant,b.generation);if(cfg.memory==='mem0')void mem0.learn(b.user).catch(()=>{});else if(saved.messages.length-saved.summarized>=24)void summarize();return json(res,200,{generation:saved.generation});}
       if(req.method==='POST'&&route==='/api/agent-input'){
         if(store.get().connectionMode!=='external'||!store.get().integrationEnabled)throw new Error('请先启用外部智能体模式和外部接口');
         const b=await body(req);const text=textInput(b.text,16000);if(b.image!==undefined&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(b.image)||b.image.length>2*1024*1024))throw new Error('画面格式错误');
-        const item={id:++inputSequence,text,at:Date.now(),...(b.image?{image:b.image}:{})};inbox.push(item);if(inbox.length>10)inbox.shift();emit('agent_input',item);return json(res,202,{id:item.id,queued:true});
+        const item={id:++inputSequence,generation:routeGeneration,text,at:Date.now(),...(b.image?{image:b.image}:{})};inbox.push(item);if(inbox.length>10)inbox.shift();emit('agent_input',item);return json(res,202,{id:item.id,queued:true});
       }
-      if(req.method==='GET'&&route==='/v1/inputs'){if(store.get().connectionMode!=='external')return json(res,200,{inputs:[],cursor:inputSequence});const after=Number(url.searchParams.get('after')||0);if(!Number.isSafeInteger(after)||after<0)throw new Error('游标格式错误');return json(res,200,{inputs:inbox.filter(i=>after>inputSequence||i.id>after),cursor:inputSequence,truncated:after>inputSequence||(!!inbox.length&&after<inbox[0].id-1)});}
+      if(req.method==='GET'&&route==='/v1/inputs'){if(store.get().connectionMode!=='external')return json(res,200,{inputs:[],connectionMode:store.get().connectionMode,generation:routeGeneration,instanceId:inputInstanceId,cursor:inputSequence});const after=Number(url.searchParams.get('after')||0);if(!Number.isSafeInteger(after)||after<0)throw new Error('游标格式错误');return json(res,200,{inputs:inbox.filter(i=>after>inputSequence||i.id>after),connectionMode:store.get().connectionMode,generation:routeGeneration,instanceId:inputInstanceId,cursor:inputSequence,truncated:after>inputSequence||(!!inbox.length&&after<inbox[0].id-1)});}
 
       if(req.method==='GET'&&route==='/api/tts/status'){
         try{return json(res,200,await providers.ttsReady(store.get().tts,store.key('tts'),AbortSignal.timeout(5000)));}catch(e){return json(res,200,{ready:false,error:e.message});}
@@ -101,7 +121,7 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
       if(req.method==='GET'&&route==='/v1/capabilities')return json(res,200,capabilities());
       if(req.method==='GET'&&route==='/v1/state')return json(res,200,{capabilities:capabilities(),tasks:tasks.list(),speechBusy});
       if(req.method==='POST'&&route==='/v1/commands') {
-        const b=await body(req,16000);const allowed=capabilities().commands;
+        const b=await body(req,16000);if(b.routeGeneration!==undefined&&(b.routeGeneration!==routeGeneration||store.get().connectionMode!=='external'))return json(res,409,{error:'对话来源已切换，旧 DSH 回复已丢弃'});const allowed=capabilities().commands;
         if(!allowed.includes(b.command))throw new Error('不支持的命令');
         if(b.requestId!==undefined&&(typeof b.requestId!=='string'||!/^[\w-]{1,100}$/.test(b.requestId)))throw new Error('requestId 格式错误');
         if(b.command==='stop'){tasks.stop();for(const c of active)c.abort();return json(res,200,{stopped:true});}
@@ -167,10 +187,13 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
       else if(route==='/vendor/live2d.js')filename=path.join(root,'web/vendor/cubism4.colors.min.js');
       else if(route.startsWith('/model/')){
         if(!cfg.model.entry)throw new Error('尚未配置角色模型');
-        filename=safePath(path.dirname(cfg.model.entry),route.slice(7));
+        const parts=route.slice(7).split('/');const version=crypto.createHash('sha256').update(cfg.model.entry).digest('hex').slice(0,20);if(parts.shift()!==version)throw new Error('角色已切换，请重新加载');
+        filename=safePath(path.dirname(cfg.model.entry),parts.join('/'));
         // Do not follow symlinks out of the selected model directory.
         const realBase=await fs.realpath(path.dirname(cfg.model.entry));const realFile=await fs.realpath(filename);safePath(realBase,path.relative(realBase,realFile));
-      } else if(route==='/api-model-entry'){return json(res,200,{url:cfg.model.entry?'/model/'+encodeURIComponent(path.basename(cfg.model.entry)):null});}
+      } else if(route==='/api-model-entry'){
+        const keyImages={};if(cfg.model.entry)for(const side of ['left-keys','right-keys']){try{for(const name of await fs.readdir(path.join(path.dirname(cfg.model.entry),'resources',side)))if(/^[A-Za-z0-9]+\.png$/.test(name))keyImages[name.slice(0,-4)]='resources/'+side+'/'+name;}catch{}}
+        return json(res,200,{url:cfg.model.entry?'/model/'+crypto.createHash('sha256').update(cfg.model.entry).digest('hex').slice(0,20)+'/'+encodeURIComponent(path.basename(cfg.model.entry)):null,keyImages});}
       else filename=safePath(path.join(root,'web'),route==='/'?'index.html':route.slice(1));
       if(!filename)return json(res,404,{error:'请先配置运行依赖'});
       if(route==='/assets/avatar-orb.png'){try{await fs.access(filename);}catch{filename=path.join(root,'web/assets/public-icon.png');}}

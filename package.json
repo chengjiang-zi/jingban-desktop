@@ -1,8 +1,8 @@
 {
   "name": "desktop-companion",
-  "version": "0.1.0",
+  "version": "0.2.0-beta.1",
   "private": true,
-  "description": "Modular desktop avatar companion prototype",
+  "description": "鲸伴 Beta — 免费开源的模块化桌面伙伴",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -14,7 +14,8 @@
     "prestart": "node scripts/prepare-icons.cjs && npm run renderer:patch",
     "prepack": "node scripts/prepare-icons.cjs && npm run renderer:patch",
     "postpack": "node scripts/set-app-icon.cjs",
-    "setup": "node scripts/setup.cjs"
+    "setup": "node scripts/setup.cjs",
+    "pack:portable": "electron-builder --prepackaged dist/win-unpacked --win portable --publish never"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",
@@ -49,9 +50,41 @@
       "signAndEditExecutable": false,
       "icon": "web/assets/app.ico"
     },
-    "executableName": "jingban"
+    "executableName": "jingban",
+    "extraFiles": [
+      {
+        "from": "docs",
+        "to": "docs"
+      },
+      {
+        "from": "README.md",
+        "to": "README.md"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE"
+      },
+      {
+        "from": "docs/WINDOWS-START.txt",
+        "to": "开始使用.txt"
+      },
+      {
+        "from": "local-asr",
+        "to": "local-asr",
+        "filter": [
+          "*.py",
+          "*.ps1",
+          "*.txt",
+          "*.md"
+        ]
+      }
+    ]
   },
-  "author": "Desktop Companion contributors",
+  "author": "澄江子",
   "engines": {
     "node": ">=24"
   },

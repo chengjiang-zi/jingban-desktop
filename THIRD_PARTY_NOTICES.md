@@ -35,3 +35,18 @@
 ## 应用图标（单独素材）
 
 维护者提供的大肥鱼卡通头像与对应 ICO 随仓库提供，具体卡通原图作者待补充；不将该图案归入代码 MIT，也不冒认与 Live2D 原画作者相同。完整来源记录、通用备用图标及使用边界见 [web/assets/README.md](web/assets/README.md)。角色模型、贴图包和声音仍不随仓库提供。
+
+## BongoCat 兼容与本机试验皮肤
+
+参考项目：https://github.com/ayangweb/BongoCat （仓库 Apache-2.0；上游注明受 MMmmmoko / Bongo-Cat-Mver 启发）。鲸伴自行实现输入采样、键位反馈与渲染适配，不复制整个 BongoCat 应用。公开源码不捆绑其角色骨架、键位图集或本机试验换肤；用户导入素材时仍须保留来源及相应许可。
+
+本机试验使用 keyboard / standard 模型资源并保留上游 LICENSE；换肤图由用户图标辅助生成，不能据此宣称原素材由鲸伴作者原创或全部可商用。
+
+### 小鱼敲键盘角色的具体来源与修改
+
+- 上游提交：[`47a73ed1765b13fdd674ec356d51b5b16a6b5a5b`](https://github.com/ayangweb/BongoCat/tree/47a73ed1765b13fdd674ec356d51b5b16a6b5a5b)。
+- 基础角色：[`resources/models/keyboard/`](https://github.com/ayangweb/BongoCat/tree/47a73ed1765b13fdd674ec356d51b5b16a6b5a5b/resources/models/keyboard)。原 MOC3 骨架、左右手参数、动作、表情、左右键位图保留，不声称是鲸伴原创建模。
+- 桌沿和鼠标图集：同一提交的 [`resources/models/standard/`](https://github.com/ayangweb/BongoCat/tree/47a73ed1765b13fdd674ec356d51b5b16a6b5a5b/resources/models/standard)。
+- 外观修改：以维护者提供的应用图标为参考，使用图片生成工具修改主贴图 `demomodel2.1024/texture_00.png`，保留原图集布局；角色仍使用原骨架，并非全新重绑定。
+- 鲸伴侧修改：`companion-scene.json` 调整眼睛形状及位置、隐藏重复桌沿、桌面前景遮挡和独立鼠标场景；加入本机按键/鼠标反馈及开关。该扩展仅鲸伴识别。
+- 本机角色目录保留 `source.json`、`UPSTREAM-LICENSE` 和修改说明；公开仓库发布适配代码和来源链接，不捆绑该修改角色包。上游 Apache-2.0 不自动覆盖另行提供的头像素材。

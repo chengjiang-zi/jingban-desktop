@@ -1,0 +1,12 @@
+鲸伴 0.2.0-beta.1 · 作者澄江子 · 免费开源
+
+1. Windows 目录包请完整解压，再双击 jingban.exe；不要只复制 EXE。
+2. 首次启动没有演示模型。请看 docs/MODELS-AND-SETUP.md，准备完整角色和 Cubism Core，然后在连接设置导入。
+3. 对话可直接连接 API，或安装鲸伴 DSH 插件后绑定主会话。
+4. 本地语音与识别服务需要自行准备。下载模型本身不会自动启动服务。
+5. 敲键盘小鱼基于 BongoCat 模型资源修改；精确来源与修改范围见 THIRD_PARTY_NOTICES.md。
+6. 演示所用模型链接和音色参数见 docs/DEMO-CONFIG.md。
+
+项目：https://github.com/chengjiang-zi/jingban-desktop
+澄江子项目交流群（总群）：QQ 881553935
+Beta 非正式稳定版。API 可能收费，第三方素材与模型按各自许可使用。

@@ -1,0 +1,6 @@
+- insert:
+    - id: jingban
+      name: dsh-jingban
+      config:
+        enabled: false
+# Override this row in your profile patch; see README.md.

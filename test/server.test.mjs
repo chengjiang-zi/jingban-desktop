@@ -100,3 +100,37 @@ test('configuration does not accept unknown provider fields or unsafe sample rat
   assert.throws(()=>validateConfig({tts:{kind:'unknown'}}));assert.throws(()=>validateConfig({tts:{sampleRate:100}}));
   assert.equal(validateConfig({chat:{injected:'unexpected'}}).chat.injected,undefined);
 });
+
+test('model URLs are isolated across switches so equal texture names cannot reuse the previous character',async t=>{
+ const app=await fixture(t);
+ for(const name of ['a','b']){await fs.mkdir(path.join(app.dir,name));await fs.writeFile(path.join(app.dir,name,'cat.model3.json'),'{}');await fs.writeFile(path.join(app.dir,name,'texture.png'),name);}
+ await app.store.save({model:{entry:path.join(app.dir,'a/cat.model3.json')}});
+ const first=(await(await app.request('/api-model-entry')).json()).url;
+ assert.equal(await(await app.request(first.replace('cat.model3.json','texture.png'))).text(),'a');
+ await app.store.save({model:{entry:path.join(app.dir,'b/cat.model3.json')}});
+ const second=(await(await app.request('/api-model-entry')).json()).url;
+ assert.notEqual(first,second);assert.equal(await(await app.request(second.replace('cat.model3.json','texture.png'))).text(),'b');
+ assert.notEqual((await app.request(first)).status,200);
+});
+
+test('DSH binding approval is local-only and switching routes rejects stale replies',async t=>{
+ const app=await fixture(t);
+ const external=(route,data)=>fetch(app.origin+route,{method:data===undefined?'GET':'POST',headers:{Authorization:`Bearer ${app.store.token}`,'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});
+ await app.request('/api/config',{connectionMode:'external'});
+ await app.request('/api/memory',{action:'save_note',text:'shared confirmed note'});
+ for(const id of ['first','second']){
+  const r=await(await external('/v1/memory/bindings/request',{sessionId:id,title:id,baseline:[]})).json();
+  assert.equal((await external('/api/shared-memory',{action:'approve',id:r.id})).status,403);
+  assert.equal((await app.request('/api/shared-memory',{action:'approve',id:r.id})).status,200);
+ }
+ await external('/v1/memory/sync',{sessionId:'first',messages:[{id:'m1',role:'user',text:'whale mint test'}]});
+ const context=await(await external('/v1/memory/context',{sessionId:'second',query:'mint'})).json();
+ assert.equal(context.bound,true);assert.equal(context.messages[0].text,'whale mint test');assert.ok(JSON.stringify(context.notes).includes('shared confirmed note'));
+ await external('/v1/agent-status',{sessionId:'first',available:true});
+ assert.equal((await(await app.request('/api/connection-status')).json()).dshOnline,true);
+ const generation=(await(await external('/v1/inputs?after=0')).json()).generation;
+ await app.request('/api/config',{connectionMode:'direct'});
+ assert.equal((await external('/v1/commands',{command:'show_message',text:'stale',routeGeneration:generation})).status,409);
+ await app.request('/api/shared-memory',{action:'unbind',sessionId:'second'});
+ const denied=await(await external('/v1/memory/context',{sessionId:'second',query:'mint'})).json();assert.equal(denied.bound,false);assert.ok(!JSON.stringify(denied).includes('shared confirmed note'));
+});

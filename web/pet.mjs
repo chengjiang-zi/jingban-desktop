@@ -1,3 +1,4 @@
+import {setupModelLibrary} from './model-library.mjs';
 import {attachUnderstanding} from './understanding.mjs';
 import {attachTouchFeedback} from './touch-feedback.mjs';
 import {Avatar} from './avatar.mjs';
@@ -37,7 +38,7 @@ events.onmessage=e=>{const event=JSON.parse(e.data);if(event.type==='config'&&ev
 avatar.load().catch(e=>showBubble(e.message,30000));
 
 let display={character:true,orb:true};
-function applyDisplay(value){display=value;$('#understanding').hidden=!value.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));avatar.setFollowCursor(value.followCursor);$('#follow-cursor').textContent='鼠标跟随：'+(value.followCursor?'开启':'关闭');$('#follow-cursor').setAttribute('aria-checked',String(!!value.followCursor));document.body.classList.toggle('character-off',!value.character);document.body.classList.toggle('orb-off',!value.orb);$('#hide-character').textContent=value.character?'隐藏角色':'显示角色';$('#hide-character').setAttribute('aria-pressed',String(value.character));$('#hide-orb').textContent=value.orb?'隐藏悬浮球':'显示悬浮球';$('#hide-orb').setAttribute('aria-pressed',String(value.orb));}
+function applyDisplay(value){display=value;avatar.setInputFeedback(value.inputFeedback);$('#understanding').hidden=!value.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));avatar.setFollowCursor(value.followCursor);$('#follow-cursor').textContent='鼠标跟随：'+(value.followCursor?'开启':'关闭');$('#follow-cursor').setAttribute('aria-checked',String(!!value.followCursor));document.body.classList.toggle('character-off',!value.character);document.body.classList.toggle('orb-off',!value.orb);$('#hide-character').textContent=value.character?'隐藏角色':'显示角色';$('#hide-character').setAttribute('aria-pressed',String(value.character));$('#hide-orb').textContent=value.orb?'隐藏悬浮球':'显示悬浮球';$('#hide-orb').setAttribute('aria-pressed',String(value.orb));}
 window.desktop?.onVisibility(applyDisplay);
 fetch('/api/bootstrap').then(r=>r.json()).then(b=>applyDisplay(b.config.display)).catch(e=>showBubble(e.message));
 $('#hide-character').onclick=()=>window.desktop?.visibility({character:!display.character}).then(applyDisplay).catch(e=>showBubble(e.message));
@@ -46,3 +47,5 @@ $('#hide-orb').onclick=()=>window.desktop?.visibility({orb:!display.orb}).then(a
 $('#follow-cursor').onclick=()=>window.desktop?.visibility({followCursor:!display.followCursor}).then(applyDisplay).catch(e=>showBubble(e.message));
 
 attachUnderstanding($('#understanding'));
+
+setupModelLibrary(avatar,'pet-import-model');

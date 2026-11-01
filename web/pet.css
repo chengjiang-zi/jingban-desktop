@@ -3,3 +3,5 @@
 body.bubbles-off #bubble{display:none}.touch-heart{position:absolute;z-index:6;pointer-events:none;color:#db8baa;font:30px sans-serif;text-shadow:0 1px 4px white;animation:touch-heart .9s ease-out forwards}@keyframes touch-heart{from{opacity:1;transform:translate(-50%,-50%) scale(.65)}to{opacity:0;transform:translate(-50%,-130%) scale(1.3)}}#bubble:hover p{overflow:auto}body.bubble-visible #bubble{animation:bubble-in .2s ease-out}@keyframes bubble-in{from{opacity:0;transform:translateY(7px) scale(.97)}to{opacity:1;transform:none}}
 
 body.character-off #avatar,body.character-off #bubble,body.character-off #pet-composer{display:none}body.orb-off .orb-dock{display:none}
+
+#orb-menu{max-height:calc(100vh - 105px);overflow-y:auto}#model-library{border:1px solid #dce5f4;border-radius:8px;padding:7px;color:#526889;background:white}
