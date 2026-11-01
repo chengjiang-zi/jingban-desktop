@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {Client} from '@modelcontextprotocol/client';
+import {StdioClientTransport} from '@modelcontextprotocol/client/stdio';
+import {startServer} from '../server.mjs';
+test('MCP stdio handshake, discovery, capability query and missing-player error',async t=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'companion-mcp-'));
+  const app=await startServer({port:0,directory});
+  const client=new Client({name:'companion-test',version:'0.1.0'});
+  const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../integrations/mcp.mjs',import.meta.url))],env:{...process.env,COMPANION_URL:app.origin,COMPANION_TOKEN_FILE:path.join(directory,'integration-token')},stderr:'pipe'});
+  t.after(async()=>{await client.close();await app.close();await fs.rm(directory,{recursive:true,force:true});});
+  await client.connect(transport);
+  const tools=await client.listTools();assert.equal(tools.tools.length,5);assert.ok(tools.tools.some(t=>t.name==='companion_present'));
+  const capability=await client.callTool({name:'companion_capabilities',arguments:{}});assert.equal(capability.isError,undefined);assert.equal(capability.structuredContent.players,0);
+  const missing=await client.callTool({name:'companion_present',arguments:{command:'speak',text:'hello'}});assert.equal(missing.isError,true);
+  const inputs=await client.callTool({name:'companion_inputs',arguments:{after:0}});assert.deepEqual(inputs.structuredContent.inputs,[]);
+  const stopped=await client.callTool({name:'companion_stop',arguments:{}});assert.equal(stopped.structuredContent.stopped,true);
+});

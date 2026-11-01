@@ -1,0 +1,56 @@
+{
+  "name": "desktop-companion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modular desktop avatar companion prototype",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "serve": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "pack": "electron-builder --dir",
+    "mcp": "node integrations/mcp.mjs",
+    "renderer:patch": "python scripts/patch_renderer.py",
+    "prestart": "node scripts/prepare-icons.cjs && npm run renderer:patch",
+    "prepack": "node scripts/prepare-icons.cjs && npm run renderer:patch",
+    "postpack": "node scripts/set-app-icon.cjs"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "electron": "45.2.1",
+    "electron-builder": "26.0.12",
+    "rcedit": "5.0.2"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "@modelcontextprotocol/server": "2.4.0",
+    "better-sqlite3": "13.0.3",
+    "mem0ai": "3.3.1",
+    "pixi-live2d-display": "0.4.0",
+    "pixi.js": "6.5.10",
+    "zod": "4.6.7"
+  },
+  "build": {
+    "appId": "local.desktop-companion",
+    "productName": "鲸伴",
+    "files": [
+      "desktop/**",
+      "web/**",
+      "lib/**",
+      "integrations/**",
+      "server.mjs",
+      "package.json",
+      "THIRD_PARTY_NOTICES.md",
+      "licenses/**"
+    ],
+    "win": {
+      "target": "dir",
+      "signAndEditExecutable": false,
+      "icon": "web/assets/app.ico"
+    }
+  },
+  "author": "Desktop Companion contributors",
+  "engines": {
+    "node": ">=24"
+  }
+}

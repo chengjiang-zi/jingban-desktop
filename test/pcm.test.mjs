@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {PCMPlayer} from '../web/pcm.mjs';
+function context(){const starts=[],sources=[];return {currentTime:1,starts,sources,createBuffer(channels,length,rate){const values=new Float32Array(length);return {duration:length/rate,getChannelData:()=>values,values};},createBufferSource(){const source={connect(){},disconnect(){},start(time){starts.push(time);},stop(){this.stopped=true;}};sources.push(source);return source;}};}
+test('PCM16 decoding, continuous scheduling and stop use the audio clock',()=>{const c=context(),p=new PCMPlayer(c,{});p.enqueue(new Uint8Array([0,128,255,127]),2);assert.equal(c.sources[0].buffer.values[0],-1);assert.ok(c.sources[0].buffer.values[1]>.99);assert.equal(c.starts[0],1.12);p.enqueue(new Uint8Array([0,0]),2);assert.equal(c.starts[1],2.12);c.currentTime=1.13;assert.equal(p.playing,true);p.stop();assert.equal(p.playing,false);assert.ok(c.sources.every(s=>s.stopped));});
+test('buffer underrun inserts a small recovery buffer and odd chunks are rejected',()=>{const c=context(),p=new PCMPlayer(c,{});p.enqueue(new Uint8Array([0,0]),10);c.currentTime=5;p.enqueue(new Uint8Array([0,0]),10);assert.equal(p.underruns,1);assert.equal(c.starts[1],5.12);assert.throws(()=>p.enqueue(new Uint8Array([0]),24000));});

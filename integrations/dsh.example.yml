@@ -1,0 +1,13 @@
+# Add this plugin row within your chosen DSH profile's plugin list.
+# Replace paths with your own absolute paths. Do not paste the token itself here.
+# DSH loading has not been exercised on this computer; MCP protocol is tested separately.
+- id: mcp-jingban
+  name: '@deepseek-ai/dsh-mcp-client'
+  config:
+    serverName: jingban
+    transport: stdio
+    command: 'C:/Program Files/nodejs/node.exe'
+    args: ['C:/YOUR_PROJECT/desktop-companion/integrations/mcp.mjs']
+    env:
+      COMPANION_URL: 'http://127.0.0.1:61950'
+      COMPANION_TOKEN_FILE: 'C:/YOUR_PROJECT/desktop-companion/.local/integration-token'

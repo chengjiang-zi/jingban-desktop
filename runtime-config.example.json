@@ -1,0 +1,8 @@
+{
+  "model": {"entry": "C:/YourModels/character/character.model3.json", "core": "C:/YourRuntime/live2dcubismcore.min.js"},
+  "tts": {"kind": "breeze", "baseUrl": "http://127.0.0.1:8137", "voice": "your-saved-voice-id", "referenceText": ""},
+  "asr": {"baseUrl": "http://127.0.0.1:61951/v1", "model": "faster-whisper-base"},
+  "chat": {"baseUrl": "", "model": "", "vision": false},
+  "playback": "stream",
+  "integrationEnabled": true
+}

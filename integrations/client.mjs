@@ -1,0 +1,12 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const token=(await fs.readFile(process.env.COMPANION_TOKEN_FILE||path.join(root,'.local/integration-token'),'utf8')).trim();
+const base=process.env.COMPANION_URL||'http://127.0.0.1:61950';
+if(new URL(base).hostname!=='127.0.0.1')throw new Error('Only loopback is supported');
+const command=process.argv[2]||'state';
+const payload=command==='speak'?{command,text:process.argv.slice(3).join(' ')}:command==='stop'?{command}:undefined;
+if(!['state','capabilities','speak','stop'].includes(command))throw new Error('Use state, capabilities, speak TEXT, or stop');
+const response=await fetch(base+(payload?'/v1/commands':'/v1/'+command),{method:payload?'POST':'GET',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:payload?JSON.stringify(payload):undefined});
+const data=await response.json();console.log(JSON.stringify(data,null,2));if(!response.ok)process.exitCode=1;
