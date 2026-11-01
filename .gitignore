@@ -8,9 +8,7 @@ dist/
 *.moc3
 *.model3.json
 !runtime-config.example.json
-web/assets/avatar-orb.png
 web/assets/avatar-orb.source.txt
-web/assets/app.ico
 web/vendor/cubism4.colors.min.js
 renderer-patch.json
 __pycache__/

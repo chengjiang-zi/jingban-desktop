@@ -31,3 +31,7 @@
 - Transformers.js 3.8.1：Apache-2.0；better-sqlite3 13.0.3：MIT。依赖原有许可证随依赖保留。
 - BAAI/bge-small-zh-v1.5：模型卡标注 MIT，https://huggingface.co/BAAI/bge-small-zh-v1.5 。使用 Xenova ONNX 转换版本，固定 revision 75c43b069aac4d136ba6bc1122f995fedcfd2781；下载后按官方文件哈希校验，权重保存在本机数据目录，不提交到源码仓库。
 - 整理记忆复用用户配置的对话 API（或独立 API）；默认向量检索在本地，用户也可以配置自己的 Embeddings API。云服务条款及费用由服务提供方决定。
+
+## 应用图标（单独素材）
+
+维护者提供的大肥鱼卡通头像与对应 ICO 随仓库提供，具体卡通原图作者待补充；不将该图案归入代码 MIT，也不冒认与 Live2D 原画作者相同。完整来源记录、通用备用图标及使用边界见 [web/assets/README.md](web/assets/README.md)。角色模型、贴图包和声音仍不随仓库提供。
