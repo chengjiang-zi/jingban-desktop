@@ -51,3 +51,8 @@ runtime-config.json
 credentials.json
 integration-token
 integration-token.txt
+# Local publishing drafts and production notes are not repository documentation.
+/docs/PUBLISHING.md
+/docs/VIDEO-PLAN.md
+/docs/RESEARCH.md
+/local-publishing/

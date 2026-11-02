@@ -27,7 +27,6 @@
 | 不装插件，用自己的智能体调用 | [MCP / HTTP 接入](integrations/README.md) |
 | 了解实现工作、参考项目和素材来源 | [项目工作与来源](docs/WORK-AND-CREDITS.md)、[第三方说明](THIRD_PARTY_NOTICES.md) |
 | 查看已测范围与现有限制 | [验证记录](docs/VALIDATION.md) |
-| 查看宣传片简介、标题、置顶评论 | [B站发布文案](docs/PUBLISHING.md) |
 
 ## 模型与演示资源
 
@@ -35,7 +34,7 @@
 
 本机演示组合：**大肥鱼 Live2D / BongoCat 小鱼改版、Breeze-TTS-2 Q8_0（本机 D 音色）、Whisper base、Mem0 OSS + BGE 中文检索、DSH 中配置的 DeepSeek-V4.1-Flash**。具体模型 ID、资源链接和配置边界见 [演示配置](docs/DEMO-CONFIG.md)。
 
-宣传片包含虚构文档、绘制摄像头与 UI 场景动画，不是自动操作 Word 或实时识别摄像头内容的实录。模型跟随、触摸、大小切换和小鱼反馈使用实际角色渲染，素材说明见 [视频说明](docs/VIDEO-PLAN.md)。
+宣传片包含虚构文档、绘制摄像头与 UI 场景动画，不是自动操作 Word 或实时识别摄像头内容的实录。模型跟随、触摸、大小切换和小鱼反馈使用实际角色渲染。
 
 ## 已有功能
 
@@ -120,14 +119,14 @@ npm run pack    # 构建 Windows 目录版
 
 本项目自主编写的代码采用 [MIT](LICENSE)。第三方组件、角色素材、Cubism Core、语音模型分别遵循自身许可，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。宿主开源不代表外部模型可商用。
 
-应用及悬浮球使用 `web/assets/avatar-orb.png` 与 `app.ico`，按维护者要求随源码提供；通用鲸鱼备用图标仍保留。两类图标的来源和许可边界见 [素材说明](web/assets/README.md)。同类方案与参考见 [研究记录](docs/RESEARCH.md)，不宣称“全网首发”。
+应用及悬浮球使用 `web/assets/avatar-orb.png` 与 `app.ico`，按维护者要求随源码提供；通用鲸鱼备用图标仍保留。两类图标的来源和许可边界见 [素材说明](web/assets/README.md)。参考关系见 [项目工作与来源](docs/WORK-AND-CREDITS.md)。
 
 ## 开发者与致谢
 
 - 作者 / 维护：澄江子。
-- 组件与参考：Electron、PixiJS、pixi-live2d-display、Mem0、BongoCat 等，见 [第三方说明](THIRD_PARTY_NOTICES.md) 与 [功能调研](docs/RESEARCH.md)。
+- 组件与参考：Electron、PixiJS、pixi-live2d-display、Mem0、BongoCat 等，见 [第三方说明](THIRD_PARTY_NOTICES.md) 与 [项目工作与来源](docs/WORK-AND-CREDITS.md)。
 - 不将第三方模型、开源组件或记忆算法称为自研成果。软件为整合与产品化实践。
-- [Beta 演示视频准备](docs/VIDEO-PLAN.md) · [版本记录](CHANGELOG.md)。
+- [版本记录](CHANGELOG.md)。
 
 ### 聊天方式与 DSH 共享记忆
 

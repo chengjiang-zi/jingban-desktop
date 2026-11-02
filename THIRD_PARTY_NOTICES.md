@@ -21,7 +21,7 @@
 - Breeze TTS 运行时、权重、参考声音：连接用户已有服务。当前本机权重使用 Research and Non-Commercial 许可，不能因为宿主代码开源就宣称整体可商用。运行时与权重的许可须分别核对。
 - API 密钥、Windows 加密凭据、集成令牌、本机绝对路径配置、会话文本、录音和屏幕画面。
 
-旧 Jingyu / Open-LLM-VTuber 目录保留为已有验证环境。本仓库独立编写产品界面、桌面生命周期与协议适配，不复制其业务源文件。对通用功能的比较与参考列在 `docs/RESEARCH.md`，不宣称这些功能是首创。
+旧 Jingyu / Open-LLM-VTuber 目录保留为已有验证环境。本仓库独立编写产品界面、桌面生命周期与协议适配，不复制其业务源文件。参考关系列在 [项目工作与来源](docs/WORK-AND-CREDITS.md)。
 
 渲染修复：scripts/patch_renderer.py 将逐部件 multiply/screen 颜色支持回补至固定版本 pixi-live2d-display，基于此前本机验证脚本，公式参考 Live2D 官方 CubismWebFramework。生成文件保留原依赖许可归属，源与输出哈希记录于 renderer-patch.json。
 
