@@ -34,6 +34,8 @@
 
 ## 模型与演示资源
 
+**小鱼已公开**：[单独模型 ZIP](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.0-beta.1/DaFeiYu-jingban-model.zip) · [内置小鱼 Windows EXE](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.0-beta.1/jingban-0.2.0-beta.1-fish-windows-x64.exe)。补充构建默认选择小鱼，免去模型下载与导入；首次仍需按下方指南取得并选择 Cubism Core，语音与对话服务另配。旧版无模型 EXE 保留。
+
 第一次使用请先看 **[模型放哪里 · 新用户配置指南](docs/MODELS-AND-SETUP.md)**：包含目录结构、角色作者入口、Live2D 官方下载、本地 Breeze 运行时及权重、固定音色创建、Whisper 安装和 Mem0 检索准备。
 
 本机演示组合：**大肥鱼 Live2D / BongoCat 小鱼改版、Breeze-TTS-2 Q8_0（本机 D 音色）、Whisper base、Mem0 OSS + BGE 中文检索、DSH 中配置的 DeepSeek-V4.1-Flash**。具体模型 ID、资源链接和配置边界见 [演示配置](docs/DEMO-CONFIG.md)。
