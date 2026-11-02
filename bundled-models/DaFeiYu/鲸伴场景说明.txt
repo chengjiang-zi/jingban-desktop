@@ -1,0 +1,1 @@
+此包保留 BongoCat 骨架。companion-scene.json 调整眼位、隐藏重复桌沿、桌面遮挡与独立鼠标场景，仅鲸伴读取。上游桌沿和鼠标来自 source.json 对应提交的 standard 目录。

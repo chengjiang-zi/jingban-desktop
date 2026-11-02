@@ -1,5 +1,7 @@
 # 第三方组件与素材边界
 
+> 2026-11-02 分发范围更新：维护者已决定公开小鱼修改皮肤，源码中的 `bundled-models/DaFeiYu/` 含完整模型及来源说明，新构建将默认选择它；旧版 v0.2.0-beta.1 EXE 不因此自动更新。Live2D Core 仍需自行取得并在设置中选择；D 音色和语音权重仍不提供。历史版本的发布范围以对应版本说明为准。
+
 本仓库的桌面入口、界面、服务适配、本机控制协议和 MCP 桥接代码采用根目录 MIT 许可。第三方组件与用户提供的素材分别适用其自身许可；本仓库的 MIT 不覆盖它们。
 
 | 组件 | 来源 | 本原型中的使用 |
@@ -34,11 +36,11 @@
 
 ## 应用图标（单独素材）
 
-维护者提供的大肥鱼卡通头像与对应 ICO 随仓库提供，具体卡通原图作者待补充；不将该图案归入代码 MIT，也不冒认与 Live2D 原画作者相同。完整来源记录、通用备用图标及使用边界见 [web/assets/README.md](web/assets/README.md)。角色模型、贴图包和声音仍不随仓库提供。
+维护者提供的大肥鱼卡通头像与对应 ICO 随仓库提供，具体卡通原图作者待补充；不将该图案归入代码 MIT，也不冒认与 Live2D 原画作者相同。完整来源记录、通用备用图标及使用边界见 [web/assets/README.md](web/assets/README.md)。除明确公开的 bundled-models/DaFeiYu 小鱼外，其他角色、贴图包和声音不随仓库提供。
 
 ## BongoCat 兼容与本机试验皮肤
 
-参考项目：https://github.com/ayangweb/BongoCat （仓库 Apache-2.0；上游注明受 MMmmmoko / Bongo-Cat-Mver 启发）。鲸伴自行实现输入采样、键位反馈与渲染适配，不复制整个 BongoCat 应用。公开源码不捆绑其角色骨架、键位图集或本机试验换肤；用户导入素材时仍须保留来源及相应许可。
+参考项目：https://github.com/ayangweb/BongoCat （仓库 Apache-2.0；上游注明受 MMmmmoko / Bongo-Cat-Mver 启发）。鲸伴自行实现输入采样、键位反馈与渲染适配，不复制整个 BongoCat 应用。新构建及源码仅明确包含 `bundled-models/DaFeiYu/` 中的小鱼修改模型、键位图集和保留的上游骨架；用户导入素材时仍须保留来源及相应许可。
 
 本机试验使用 keyboard / standard 模型资源并保留上游 LICENSE；换肤图由用户图标辅助生成，不能据此宣称原素材由鲸伴作者原创或全部可商用。
 
@@ -49,4 +51,4 @@
 - 桌沿和鼠标图集：同一提交的 [`resources/models/standard/`](https://github.com/ayangweb/BongoCat/tree/47a73ed1765b13fdd674ec356d51b5b16a6b5a5b/resources/models/standard)。
 - 外观修改：以维护者提供的应用图标为参考，使用图片生成工具修改主贴图 `demomodel2.1024/texture_00.png`，保留原图集布局；角色仍使用原骨架，并非全新重绑定。
 - 鲸伴侧修改：`companion-scene.json` 调整眼睛形状及位置、隐藏重复桌沿、桌面前景遮挡和独立鼠标场景；加入本机按键/鼠标反馈及开关。该扩展仅鲸伴识别。
-- 本机角色目录保留 `source.json`、`UPSTREAM-LICENSE` 和修改说明；公开仓库发布适配代码和来源链接，不捆绑该修改角色包。上游 Apache-2.0 不自动覆盖另行提供的头像素材。
+- 本机角色目录保留 `source.json`、`UPSTREAM-LICENSE` 和修改说明；公开仓库同时提供 `bundled-models/DaFeiYu/` 修改角色包。上游 Apache-2.0 不自动覆盖另行提供的头像素材。

@@ -1,0 +1,29 @@
+{
+  "mouseSprite": {
+    "texture": "resources/mouse-atlas.png",
+    "frame": [
+      258,
+      204,
+      90,
+      83
+    ]
+  },
+  "hideDrawables": [
+    "table",
+    "table2"
+  ],
+  "eyes": {
+    "youyan": {
+      "sx": 0.9,
+      "sy": 1.8,
+      "dx": 0.055,
+      "dy": -0.045
+    },
+    "zuoyan": {
+      "sx": 0.9,
+      "sy": 1.8,
+      "dx": 0.005,
+      "dy": -0.02
+    }
+  }
+}

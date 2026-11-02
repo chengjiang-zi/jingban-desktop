@@ -43,7 +43,8 @@
       "server.mjs",
       "package.json",
       "THIRD_PARTY_NOTICES.md",
-      "licenses/**"
+      "licenses/**",
+      "bundled-models/**"
     ],
     "win": {
       "target": "dir",

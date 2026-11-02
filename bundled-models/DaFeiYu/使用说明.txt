@@ -1,0 +1,5 @@
+鲸伴内置敲键盘小鱼
+作者澄江子基于 BongoCat keyboard/standard 资源修改，保留原骨架与动作；修改贴图和鲸伴场景适配。上游提交和许可见 source.json 与 UPSTREAM-LICENSE。
+安装鲸伴时自动加入角色库，无需另找小鱼模型。Live2D Core 是独立运行库，未随本包提供，首次需在设置选择。
+单独下载模型ZIP后完整解压，在鲸伴角色库导入 cat.model3.json。companion-scene.json 仅鲸伴识别；不承诺 BongoCat 本体显示完全一致。
+卡通外观参考维护者提供的图标，原图作者来源待补充，不纳入代码MIT，也不额外授予原素材商用权。

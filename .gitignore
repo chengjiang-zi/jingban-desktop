@@ -56,3 +56,7 @@ integration-token.txt
 /docs/VIDEO-PLAN.md
 /docs/RESEARCH.md
 /local-publishing/
+
+# Explicitly distributed default fish model; private models remain ignored.
+!/bundled-models/
+!/bundled-models/**

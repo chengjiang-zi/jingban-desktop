@@ -58,6 +58,9 @@ app.whenReady().then(async()=>{
   };
   const {startServer}=await import(pathToFileURL(path.join(__dirname,'../server.mjs')));
   host=await startServer({port:61950,directory:data,secrets});
+  const bundledEntry=path.join(__dirname,'../bundled-models/DaFeiYu/cat.model3.json');
+  const previousEntry=host.store.get().model.entry;
+  if((!previousEntry||previousEntry.replaceAll('\\','/').includes('/bundled-models/DaFeiYu/'))&&existsSync(bundledEntry))await host.store.save({model:{entry:bundledEntry}});
   modelLibrary=await new ModelLibrary(data,host.store,item=>{for(const win of [main,pet])if(win&&!win.isDestroyed())win.webContents.send('desktop:model',item);}).init();
   const mediaPermissions=await new MediaPermissions(path.join(data,'media-permissions.json')).load();
   main=new BrowserWindow({icon:appIcon,width:1240,height:820,minWidth:900,minHeight:650,backgroundColor:'#f4f6fa',title:'鲸伴 · 桌面数字人',webPreferences:options,show:false});
