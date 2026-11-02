@@ -34,7 +34,7 @@ function showPet(){
 }
 let visibilityQueue=Promise.resolve();
 function setVisibility(patch){const task=visibilityQueue.then(async()=>{
-  const display={...host.store.get().display};for(const key of ['character','orb','followCursor','showUnderstanding','inputFeedback'])if(patch[key]!==undefined){if(typeof patch[key]!=='boolean')throw new Error('显示开关格式错误');display[key]=patch[key];}
+  const display={...host.store.get().display};for(const key of ['character','orb','followCursor','showUnderstanding','inputFeedback','fishTouch'])if(patch[key]!==undefined){if(typeof patch[key]!=='boolean')throw new Error('显示开关格式错误');display[key]=patch[key];}
   await host.store.save({display});if(patch.character!==undefined||patch.orb!==undefined){if(display.character||display.orb)showPet();else pet?.hide();}
   pet?.webContents.send('desktop:visibility',display);main?.webContents.send('desktop:visibility',display);updateTray();return display;
 });visibilityQueue=task.catch(()=>{});return task;}
@@ -61,6 +61,8 @@ app.whenReady().then(async()=>{
   const bundledEntry=path.join(__dirname,'../bundled-models/DaFeiYu/cat.model3.json');
   const previousEntry=host.store.get().model.entry;
   if((!previousEntry||previousEntry.replaceAll('\\','/').includes('/bundled-models/DaFeiYu/'))&&existsSync(bundledEntry))await host.store.save({model:{entry:bundledEntry}});
+  const bundledCore=path.join(process.resourcesPath,'live2d','live2dcubismcore.min.js');
+  if(!host.store.get().model.core&&existsSync(bundledCore))await host.store.save({model:{core:bundledCore}});
   modelLibrary=await new ModelLibrary(data,host.store,item=>{for(const win of [main,pet])if(win&&!win.isDestroyed())win.webContents.send('desktop:model',item);}).init();
   const mediaPermissions=await new MediaPermissions(path.join(data,'media-permissions.json')).load();
   main=new BrowserWindow({icon:appIcon,width:1240,height:820,minWidth:900,minHeight:650,backgroundColor:'#f4f6fa',title:'鲸伴 · 桌面数字人',webPreferences:options,show:false});
@@ -131,6 +133,7 @@ app.whenReady().then(async()=>{
       return {allowed:result.response===1,remember:result.checkboxChecked};
     }));}catch{callback(false);}
   });
+  if(host.store.get().model.entry && host.store.get().model.core)showPet();
   await fs.writeFile(path.join(data,'desktop-runtime.json'),JSON.stringify({pid:process.pid,origin:host.origin,startedAt:Date.now()}));
 }).catch(error=>{dialog.showErrorBox('鲸伴启动失败',error.message);quitting=true;app.quit();});
 app.on('before-quit',()=>{quitting=true;bongoInput.setEnabled(false);clearInterval(cursorTimer);host?.close();});

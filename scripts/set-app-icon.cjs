@@ -5,7 +5,7 @@ const os=require('node:os');
 const root=path.resolve(__dirname,'..');
 // The bundled resource editor does not handle non-ASCII target filenames.
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'jingban-icon-'));
-const target=path.join(root,'dist/win-unpacked/jingban.exe');
+const target=path.join(root,process.env.JINGBAN_BUILD_OUTPUT||'dist','win-unpacked/jingban.exe');
 try{
  fs.copyFileSync(target,path.join(temp,'app.exe'));
  fs.copyFileSync(path.join(root,'web/assets/app.ico'),path.join(temp,'app.ico'));

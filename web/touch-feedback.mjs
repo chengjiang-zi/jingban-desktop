@@ -6,7 +6,7 @@ export function attachTouchFeedback(container,avatar,blocked=()=>false){
   container.addEventListener('pointerup',e=>{
     const start=down;down=null;const now=performance.now();
     if(!start||blocked()||now-last<90||now-start.time>700||Math.hypot(e.clientX-start.x,e.clientY-start.y)>6||!avatar.touches(e.clientX,e.clientY))return;
-    last=now;const kind=avatar.touch(e.clientX,e.clientY),reaction=reactions[kind];
+    last=now;const kind=avatar.touch(e.clientX,e.clientY);if(!kind)return;const reaction=kind==='fish'?{glyph:'✦',color:'#82b8cb'}:reactions[kind];if(!reaction)return;
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(avatar.touchNotice){
       document.querySelector('.touch-notice')?.remove();const note=document.createElement('span');note.className='touch-notice';note.textContent=avatar.touchNotice;

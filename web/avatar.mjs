@@ -12,12 +12,13 @@ export class Avatar {
     else{document.addEventListener('pointermove',e=>{this.gazePoint={x:e.clientX,y:e.clientY};});document.documentElement.addEventListener('pointerleave',()=>this.gazePoint=null);}
   }
   setInputFeedback(on){this.inputFeedback=!!on;this.keyFeedback?.setEnabled(on);}
+  setFishTouch(on){this.fishTouch=!!on;}
   setFollowCursor(on){this.followCursor=!!on;}
   async load(){
     const generation=this.loadGeneration=(this.loadGeneration||0)+1;
     const response=await fetch('/api-model-entry');const {url,keyImages={}}=await response.json();
     if(!url)throw new Error('在连接设置中选择角色模型和 Cubism Core');
-    if(!window.PIXI?.live2d)throw new Error('角色渲染库未加载，请检查 Cubism Core 路径');
+    if(!window.Live2DCubismCore || !window.PIXI?.live2d?.Live2DModel)throw new Error('小鱼已内置，请先在连接设置中选择 Cubism Core 文件');
     const model=await PIXI.live2d.Live2DModel.from(url,{autoInteract:false,autoUpdate:true});
     const parameters=model.internalModel.coreModel.getModel().parameters.ids;const bongo=parameters.includes('CatParamLeftHandDown');
     let scene={},mouseTexture=null;if(bongo){try{const r=await fetch(new URL('companion-scene.json',new URL(url,location.href)));if(r.ok)scene=await r.json();if(scene.mouseSprite){mouseTexture=await PIXI.Texture.fromURL(new URL('resources/mouse-atlas.png',new URL(url,location.href)).href);}}catch{}}
@@ -79,7 +80,7 @@ export class Avatar {
   }
   setFraming(value){if(!['full','half','close','detail'].includes(value))return;this.framing=value;this.closeup=value==='close';this.zoom=1;this.fit();}
   toggleView(){this.framing=null;this.closeup=!this.closeup;this.fit();return this.closeup;}
-  touch(x,y){if(!this.model)return 'head';if(this.bongo)this.tapUntil=performance.now()+180;const rect=this.container.getBoundingClientRect(),bounds=this.model.getBounds();const nx=(x-rect.left-bounds.x)/bounds.width,ny=(y-rect.top-bounds.y)/bounds.height;const zone=ny<.28?'head':(nx<.2||nx>.8)?'edge':'body';const result=this.touchSequence.trigger(zone,nx<.5?-1:1,performance.now());this.touchNotice=result.notice;return result.kind;}
+  touch(x,y){if(!this.model)return null;if(this.bongo){this.touchNotice=null;if(!this.fishTouch)return null;this.tapUntil=performance.now()+180;return 'fish';}const rect=this.container.getBoundingClientRect(),bounds=this.model.getBounds();const nx=(x-rect.left-bounds.x)/bounds.width,ny=(y-rect.top-bounds.y)/bounds.height;const zone=ny<.28?'head':(nx<.2||nx>.8)?'edge':'body';const result=this.touchSequence.trigger(zone,nx<.5?-1:1,performance.now());this.touchNotice=result.notice;return result.kind;}
   setMouth(value){this.mouth=Math.max(0,Math.min(1,value));}
   perform(expression){this.expression=expression;clearTimeout(this.timer);this.timer=setTimeout(()=>this.expression='neutral',4000);}
 }

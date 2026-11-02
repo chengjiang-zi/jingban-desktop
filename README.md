@@ -6,9 +6,9 @@
 
 鲸伴是澄江子制作的 Windows 桌面伙伴：平时做桌宠，聊天时可以开口回应，也能切换成陪你敲键盘的小鱼。角色、声音、语音识别和对话服务可分别配置；可以直接接 API，也可以安装可选 DSH 插件，让已有助手通过鲸伴与桌面互动。
 
-[下载 Windows Beta](https://github.com/chengjiang-zi/jingban-desktop/releases) · [完整使用手册](docs/USER-GUIDE.md) · [模型下载与放置](docs/MODELS-AND-SETUP.md) · [DSH 插件](integrations/dsh-plugin/README.md)
+[下载 Windows Beta（内置小鱼）](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.1-beta.1/jingban-0.2.1-beta.1-windows-x64.exe) · [完整使用手册](docs/USER-GUIDE.md) · [模型下载与放置](docs/MODELS-AND-SETUP.md) · [DSH 插件](integrations/dsh-plugin/README.md)
 
-**0.2.0-beta.1 · Beta 测试版，非正式版本 · 源码与 Windows 体验包。** 需要自行配置角色和服务，不是开箱即用的完整视频通话产品。公开仓库包含大肥鱼卡通应用图标及通用备用图标，不包含完整 Live2D 角色模型、贴图包、声音权重或 Cubism Core。图标素材不纳入代码 MIT，见 [素材说明](web/assets/README.md)。
+**0.2.1-beta.1 · Beta 测试版，非正式版本 · 源码与 Windows 体验包。** 目前仅支持 Windows；macOS 和 Linux 暂不支持。内置小鱼模型；首次使用仍需自行配置 Cubism Core 和所需服务，不是开箱即用的完整视频通话产品。公开仓库包含小鱼模型、大肥鱼卡通应用图标及通用备用图标，不包含普通大肥鱼角色模型、声音权重或 Cubism Core。图标素材不纳入代码 MIT，见 [素材说明](web/assets/README.md)。
 
 作者：**澄江子** · B站：**澄江子**。软件代码完全开源免费，采用 MIT 许可；第三方素材与服务不因此改变许可或变成免费服务。
 
@@ -34,7 +34,11 @@
 
 ## 模型与演示资源
 
-**小鱼已公开**：[单独模型 ZIP](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.0-beta.1/DaFeiYu-jingban-model.zip) · [内置小鱼 Windows EXE](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.0-beta.1/jingban-0.2.0-beta.1-fish-windows-x64.exe)。补充构建默认选择小鱼，免去模型下载与导入；首次仍需按下方指南取得并选择 Cubism Core，语音与对话服务另配。旧版无模型 EXE 保留。
+**Windows 下载**：[鲸伴 Beta（内置小鱼）](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.1-beta.1/jingban-0.2.1-beta.1-windows-x64.exe)。首次仍需按下方指南取得并选择 Cubism Core，语音与对话服务另配。
+
+首次使用：在 [Live2D 官方页面](https://www.live2d.com/en/sdk/download/web/) 按官方许可取得 Cubism SDK for Web，解压后打开鲸伴的“连接设置”，选择 `Core/live2dcubismcore.min.js`，再点击“重载角色”。小鱼模型已内置，不必重复导入。语音和对话功能需要另行配置。
+
+**小鱼触摸反馈（测试版）**：在“设置 → 桌宠与互动”中开启，默认关闭。开启后轻触小鱼会触发轻拍和星星反馈；小鱼不使用大肥鱼的触摸台词，键盘与鼠标亮键反馈仍可单独控制。
 
 第一次使用请先看 **[模型放哪里 · 新用户配置指南](docs/MODELS-AND-SETUP.md)**：包含目录结构、角色作者入口、Live2D 官方下载、本地 Breeze 运行时及权重、固定音色创建、Whisper 安装和 Mem0 检索准备。
 
@@ -144,8 +148,8 @@ npm run pack    # 构建 Windows 目录版
 
 ### Windows 玩家下载
 
-请到 [Releases](https://github.com/chengjiang-zi/jingban-desktop/releases) 下载标有 **Beta** 的 Windows 包，不要把绿色 Code → Download ZIP 当成安装程序。Windows 目录包完整解压后运行 `jingban.exe`，保留同目录的 resources、DLL 等文件。便携 EXE 若列在附件中，可直接打开。软件本体免费；第三方 API 可能收费，模型与素材遵循各自许可。
+请下载[内置小鱼的 Windows Beta](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.1-beta.1/jingban-0.2.1-beta.1-windows-x64.exe)，不要把绿色 Code → Download ZIP 当成安装程序。Windows 目录包完整解压后运行 `jingban.exe`，保留同目录的 resources、DLL 等文件。便携 EXE 若列在附件中，可直接打开。软件本体免费；第三方 API 可能收费，模型与素材遵循各自许可。
 
-新安装不附带演示角色、Core、语音权重或 D 音色。请先阅读 [模型下载、放置与服务配置](docs/MODELS-AND-SETUP.md)。小鱼敲键盘是同一软件中的另一种角色模式，基于 BongoCat 模型资源改造；来源与修改明细见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+推荐版内置小鱼，但不附带普通大肥鱼角色、Core、语音权重或 D 音色。请先阅读 [模型下载、放置与服务配置](docs/MODELS-AND-SETUP.md)。小鱼敲键盘是同一软件中的另一种角色模式，基于 BongoCat 模型资源改造；来源与修改明细见 [第三方说明](THIRD_PARTY_NOTICES.md)。
 
 演示用到的全部模型链接、D 音色合成参数，以及本地/联网处理范围，见 [演示配置表](docs/DEMO-CONFIG.md)。

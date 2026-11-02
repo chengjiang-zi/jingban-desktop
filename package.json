@@ -1,6 +1,6 @@
 {
   "name": "desktop-companion",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.1-beta.1",
   "private": true,
   "description": "鲸伴 Beta — 免费开源的模块化桌面伙伴",
   "main": "desktop/main.cjs",
