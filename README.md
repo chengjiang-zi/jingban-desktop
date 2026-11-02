@@ -1,14 +1,41 @@
 # 鲸伴 · 桌面数字人（Beta）
 
-可更换角色、声音、语音识别和对话服务的 Windows 桌面伙伴。提供透明桌宠、语音互动和外部智能体接入。
+**让大肥鱼住进你的桌面。语音、视觉、记忆与桌面互动，一站接入。**
+
+鲸伴是澄江子制作的 Windows 桌面伙伴：平时做桌宠，聊天时可以开口回应，也能切换成陪你敲键盘的小鱼。角色、声音、语音识别和对话服务可分别配置；可以直接接 API，也可以安装可选 DSH 插件，让已有助手通过鲸伴与桌面互动。
+
+[下载 Windows Beta](https://github.com/chengjiang-zi/jingban-desktop/releases) · [完整使用手册](docs/USER-GUIDE.md) · [模型下载与放置](docs/MODELS-AND-SETUP.md) · [DSH 插件](integrations/dsh-plugin/README.md)
 
 **0.2.0-beta.1 · Beta 测试版，非正式版本 · 源码与 Windows 体验包。** 需要自行配置角色和服务，不是开箱即用的完整视频通话产品。公开仓库包含大肥鱼卡通应用图标及通用备用图标，不包含完整 Live2D 角色模型、贴图包、声音权重或 Cubism Core。图标素材不纳入代码 MIT，见 [素材说明](web/assets/README.md)。
 
 作者：**澄江子** · B站：**澄江子**。软件代码完全开源免费，采用 MIT 许可；第三方素材与服务不因此改变许可或变成免费服务。
 
+## 我做了哪些工作
+
+这是整合与产品化实践：桌面窗口与悬浮球、设置和角色库、语音播放与打断、画面输入、记忆管理、可替换服务的适配，以及 DSH / MCP / HTTP 接入。敲键盘小鱼由澄江子基于 BongoCat 模型素材修改，并加入鲸伴侧的眼位、桌沿、鼠标场景与键位反馈适配；保留上游骨架，不是从零制作的新 Live2D 模型。
+
+不把 Live2D 角色、TTS / ASR 模型、Mem0 算法或第三方组件称为自研。具体工作、借鉴关系与致谢见 **[项目工作与来源](docs/WORK-AND-CREDITS.md)**。
+
+## 先看哪份文档
+
+| 你想做什么 | 文档 |
+|---|---|
+| 下载后从头配置、学会日常操作 | [完整使用手册](docs/USER-GUIDE.md) |
+| 找模型、放文件、启动声音和识别服务 | [模型配置指南](docs/MODELS-AND-SETUP.md) |
+| 找视频里的角色、声音、模型及参数 | [演示配置与资源链接](docs/DEMO-CONFIG.md) |
+| 安装 DSH 插件、绑定主对话和共享记忆 | [DSH 插件说明](integrations/dsh-plugin/README.md) |
+| 不装插件，用自己的智能体调用 | [MCP / HTTP 接入](integrations/README.md) |
+| 了解实现工作、参考项目和素材来源 | [项目工作与来源](docs/WORK-AND-CREDITS.md)、[第三方说明](THIRD_PARTY_NOTICES.md) |
+| 查看已测范围与现有限制 | [验证记录](docs/VALIDATION.md) |
+| 查看宣传片简介、标题、置顶评论 | [B站发布文案](docs/PUBLISHING.md) |
+
 ## 模型与演示资源
 
 第一次使用请先看 **[模型放哪里 · 新用户配置指南](docs/MODELS-AND-SETUP.md)**：包含目录结构、角色作者入口、Live2D 官方下载、本地 Breeze 运行时及权重、固定音色创建、Whisper 安装和 Mem0 检索准备。
+
+本机演示组合：**大肥鱼 Live2D / BongoCat 小鱼改版、Breeze-TTS-2 Q8_0（本机 D 音色）、Whisper base、Mem0 OSS + BGE 中文检索、DSH 中配置的 DeepSeek-V4.1-Flash**。具体模型 ID、资源链接和配置边界见 [演示配置](docs/DEMO-CONFIG.md)。
+
+宣传片包含虚构文档、绘制摄像头与 UI 场景动画，不是自动操作 Word 或实时识别摄像头内容的实录。模型跟随、触摸、大小切换和小鱼反馈使用实际角色渲染，素材说明见 [视频说明](docs/VIDEO-PLAN.md)。
 
 ## 已有功能
 
