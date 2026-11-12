@@ -1,4 +1,4 @@
-鲸伴 0.2.0-beta.1 · 作者澄江子 · 免费开源
+鲸伴 0.2.2-beta.1 · 作者澄江子 · 免费开源
 
 1. Windows 目录包请完整解压，再双击 jingban.exe；不要只复制 EXE。
 2. 内置小鱼模型。请看 docs/MODELS-AND-SETUP.md，自行取得 Cubism Core，在连接设置选择 Core 并点击重载角色。

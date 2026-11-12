@@ -49,7 +49,21 @@ node integrations/companion-cli.mjs stop
 | GET /v1/state | 任务列表与播放状态 |
 | GET /v1/events | SSE 状态与 agent_input 事件；客户端需携带授权头 |
 
-commands 支持 speak、show_message、perform、set_task_status、stop；perform 使用 expression（neutral/happy/thinking/surprised）。同一个 requestId 只对应同一条命令，用于重试去重。详细限制以 capabilities 和服务器校验为准。
+commands 支持 speak、show_message、perform、animate、set_task_status、stop。perform 使用 expression（neutral/happy/thinking/surprised）。同一个 requestId 只对应同一条命令，用于重试去重。
+
+### 角色动作
+
+先读取 capabilities 的 `avatar.actions`，使用其中的 `modelVersion` 和参数。没有角色或关闭了 AI 动作时，该字段为 null。HTTP 调用 `POST /v1/commands`，MCP 调用 `companion_present`，两者参数相同：
+
+```json
+{
+  "command": "animate",
+  "modelVersion": "从 capabilities 获取",
+  "action": { "frames": [[0, {}], [400, {"tilt": 0.5}], [900, {"nod": -0.6}], [1400, {}]] }
+}
+```
+
+`action` 也接受 `{"preset":"agree"}` 或 `{"motion":{"group":"组名","index":0}}`。自定义动作最多 12 帧、8 秒。时间从 0 开始递增，首尾回到默认姿态。参数范围为 -1 到 1。任务状态 `completed` 表示渲染器已接受并开始动作。
 
 ## 让 DSH 协助安装
 

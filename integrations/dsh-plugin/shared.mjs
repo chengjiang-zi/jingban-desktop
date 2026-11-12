@@ -36,5 +36,5 @@ export function installSharedMemory(ctx,call,{onError=()=>{}}={}){
  });
  ctx.on('agent/status',({agent,status})=>{if(status==='idle')void sync(agent).catch(onError);});
  ctx.effect(()=>{void refresh();const timer=setInterval(()=>void refresh(),2000);timer.unref?.();return ()=>{closed=true;lifetime.abort();clearInterval(timer);};});
- return {primary:()=>bindings.find(b=>b.main)?.sessionId,refresh};
+ return {primary:()=>bindings.find(b=>b.main)?.sessionId,isBound:id=>bindings.some(b=>b.sessionId===id),refresh};
 }

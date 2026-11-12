@@ -2,7 +2,8 @@
 import {createCompanionClient} from './client.mjs?v=beta1-r4';
 import {installMemoryTool} from './memory-tool.mjs?v=beta1-r4';
 import {createBridge} from './bridge.mjs?v=beta1-r4';
-import {installSharedMemory} from './shared.mjs?v=beta1-r4';
+import {installSharedMemory} from './shared.mjs?v=beta1-r5';
+import {installAvatarPrompt,installAvatarTool} from './avatar-tool.mjs';
 export const name='jingban';
 export const inject=['agents'];
 export function apply(ctx,config={}){
@@ -14,7 +15,11 @@ export function apply(ctx,config={}){
   const call=createCompanionClient(config);
   const onError=error=>console.error('[jingban]',error.message);
   const shared=config.sharedMemory===true?installSharedMemory(ctx,call,{onError}):null;
-  ctx.inject(['tools'],toolCtx=>installMemoryTool(toolCtx,call));
+  ctx.inject(['tools'],toolCtx=>{
+    installMemoryTool(toolCtx,call);
+    installAvatarTool(toolCtx,call,{sessionId:config.sessionId,sharedMemory:!!shared});
+  });
+  ctx.inject(['systemPrompt'],promptCtx=>installAvatarPrompt(promptCtx,call,id=>shared?shared.isBound(id):id===config.sessionId));
   const bridge=createBridge({getAgent:()=>ctx.agents.get(shared?shared.primary():config.sessionId),call,speak:config.speak!==false,emitReplies:!shared,pollMs,onError});
   ctx.effect(()=>{bridge.start();return ()=>bridge.close();});
 }

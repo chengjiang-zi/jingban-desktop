@@ -34,7 +34,7 @@ function showPet(){
 }
 let visibilityQueue=Promise.resolve();
 function setVisibility(patch){const task=visibilityQueue.then(async()=>{
-  const display={...host.store.get().display};for(const key of ['character','orb','followCursor','showUnderstanding','inputFeedback','fishTouch'])if(patch[key]!==undefined){if(typeof patch[key]!=='boolean')throw new Error('显示开关格式错误');display[key]=patch[key];}
+  const display={...host.store.get().display};for(const key of ['character','orb','followCursor','showUnderstanding','inputFeedback','fishTouch','aiActions'])if(patch[key]!==undefined){if(typeof patch[key]!=='boolean')throw new Error('显示开关格式错误');display[key]=patch[key];}
   await host.store.save({display});if(patch.character!==undefined||patch.orb!==undefined){if(display.character||display.orb)showPet();else pet?.hide();}
   pet?.webContents.send('desktop:visibility',display);main?.webContents.send('desktop:visibility',display);updateTray();return display;
 });visibilityQueue=task.catch(()=>{});return task;}

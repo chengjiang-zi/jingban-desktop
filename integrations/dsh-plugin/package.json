@@ -1,6 +1,6 @@
 {
   "name": "dsh-jingban",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.2-beta.1",
   "description": "鲸伴桌宠与指定 DSH 会话的轻量桥接（Beta）",
   "author": "澄江子",
   "license": "MIT",

@@ -13,6 +13,8 @@
 
 ## 安装
 
+鲸伴 0.2.2-beta.1 与新版插件提供 `jingban_avatar_action`。当已绑定会话可用该工具时，插件自动在 DSH 系统提示词中说明怎么查询动作和编排关键帧。开启鲸伴的「设置 → 桌宠与互动 → 允许 AI 控制角色动作」，然后对 DSH 说「先歪头，再眨眼，最后点两下头」即可尝试。已有绑定配置可以沿用。
+
 先在鲸伴选择“由外部智能体接入”，启用外部调用，并在“外部接入”页查看服务地址和令牌文件路径。保留鲸伴主进程运行。
 
 先创建一个专用 DSH 会话并在 DSH 中打开它，复制其 session ID。不要绑定正在进行其他工作的会话。
@@ -26,7 +28,7 @@ dsh plugin --profile desktop add ./integrations/dsh-plugin
 也可以在插件目录执行 `npm pack` 得到小型 `.tgz`，然后：
 
 ```sh
-dsh plugin --profile desktop add /absolute/path/dsh-jingban-0.2.0-beta.1.tgz
+dsh plugin --profile desktop add /absolute/path/dsh-jingban-0.2.2-beta.1.tgz
 ```
 
 安装后默认停用。在该 profile 的 `cordis.patch.yml` 覆盖 **jingban** 这一行，不覆盖整个配置文件：

@@ -2,6 +2,7 @@ import {KeyFeedback} from './key-feedback.mjs';
 import {constrainBongoScene} from './bongo-scene.mjs';
 import {TouchSequence} from './touch-reactions.mjs';
 import {gazeTarget,stepGaze,clamp} from './gaze.mjs';
+import {actionCatalog,actionChannels,gestures,sampleAction,validateAction} from './actions.mjs';
 export class Avatar {
   constructor(container){this.container=container;this.mouth=0;this.expression='neutral';this.followCursor=true;this.gaze={x:0,y:0,hx:0,hy:0};this.touchSequence=new TouchSequence();this.hands={left:false,right:false};
     window.desktop?.onHands(value=>{this.hands=value;this.keyFeedback?.update(value.keys||[]);const now=performance.now();if(value.left||((this.mouseRig||this.mouseSprite)&&value.right))this.leftUntil=now+100;if(value.right)this.rightUntil=now+100;if(value.mouseLeft)this.mouseLeftUntil=now+100;if(value.mouseRight)this.mouseRightUntil=now+100;});
@@ -16,7 +17,7 @@ export class Avatar {
   setFollowCursor(on){this.followCursor=!!on;}
   async load(){
     const generation=this.loadGeneration=(this.loadGeneration||0)+1;
-    const response=await fetch('/api-model-entry');const {url,keyImages={}}=await response.json();
+    const response=await fetch('/api-model-entry');const {url,version,keyImages={}}=await response.json();
     if(!url)throw new Error('在连接设置中选择角色模型和 Cubism Core');
     if(!window.Live2DCubismCore || !window.PIXI?.live2d?.Live2DModel)throw new Error('小鱼已内置，请先在连接设置中选择 Cubism Core 文件');
     const model=await PIXI.live2d.Live2DModel.from(url,{autoInteract:false,autoUpdate:true});
@@ -24,11 +25,18 @@ export class Avatar {
     let scene={},mouseTexture=null;if(bongo){try{const r=await fetch(new URL('companion-scene.json',new URL(url,location.href)));if(r.ok)scene=await r.json();if(scene.mouseSprite){mouseTexture=await PIXI.Texture.fromURL(new URL('resources/mouse-atlas.png',new URL(url,location.href)).href);}}catch{}}
     let background=null;if(bongo){try{background=await PIXI.Texture.fromURL(new URL('resources/background.png',new URL(url,location.href)).href);}catch{}}
     if(generation!==this.loadGeneration){model.destroy();return;}
+    this.stopAction();
     this.observer?.disconnect();this.keyFeedback?.destroy();
     if(this.app)this.app.destroy(true,{children:true,texture:false,baseTexture:false});
     this.app=new PIXI.Application({resizeTo:this.container,backgroundAlpha:0,antialias:true,preserveDrawingBuffer:true,resolution:Math.max(2,Math.min(devicePixelRatio,3)),autoDensity:true});
     this.app.ticker.maxFPS=30;this.container.append(this.app.view);
     this.model=model;
+    this.modelVersion=version;
+    const internal=model.internalModel;
+    this.actions=actionCatalog(parameters,internal.motionManager.definitions);
+    this.actionParameters=Object.fromEntries(Object.entries(actionChannels).map(([channel,ids])=>[
+      channel,ids.filter(id=>parameters.includes(id))
+    ]));
     this.bongo=bongo;this.mouseRig=parameters.includes('ParamMouseX');
     this.background=null;if(background){this.background=new PIXI.Sprite(background);this.background.anchor.set(.5,.5);this.app.stage.addChild(this.background);}
     this.framing='full';this.closeup=false;this.zoom=1;
@@ -38,7 +46,6 @@ export class Avatar {
     this.mouseSprite=null;if(mouseTexture){this.mouseSprite=new PIXI.Sprite(new PIXI.Texture(mouseTexture.baseTexture,new PIXI.Rectangle(258,204,90,83)));this.mouseSprite.anchor.set(.5,.5);this.app.stage.addChild(this.mouseSprite);}
     this.keyFeedback=this.bongo?new KeyFeedback(this.app,new URL(url,location.href),keyImages):null;this.keyFeedback?.setEnabled(this.inputFeedback!==false);
     this.mouseFeedback=null;if(this.mouseSprite){this.mouseFeedback=new PIXI.Graphics();this.mouseSprite.addChild(this.mouseFeedback);}
-    const internal=this.model.internalModel;
     if(this.bongo)constrainBongoScene(internal,scene);
     if(!this.bongo)internal.renderer.setClippingMaskBufferSize(2048);
     internal.on('beforeModelUpdate',()=>{
@@ -49,9 +56,26 @@ export class Avatar {
       this.gaze=stepGaze(this.gaze,target,(now-(this.gazeTime??now))/1000);this.gazeTime=now;
       const g=this.gaze;this.keyFeedback?.tick(this.model);
       if(this.mouseFeedback){const f=this.mouseFeedback;f.clear();if(this.inputFeedback!==false){if(this.hands.mouseLeft||now<(this.mouseLeftUntil||0))f.beginFill(0x70a5ff,.7).drawEllipse(-12,-14,10,13).endFill();if(this.hands.mouseRight||now<(this.mouseRightUntil||0))f.beginFill(0xa08aff,.7).drawEllipse(10,-10,10,13).endFill();}}
+      const action=this.action;
+      const elapsed=action?now-action.start:0;
+      if(action?.frames&&elapsed>=action.frames.at(-1)[0])this.action=null;
+      const animated=action?.frames?sampleAction(action.frames,elapsed):{};
+      const native=!!action?.native;
       const pose=this.touchSequence.sample(now);
-      if(this.bongo){c.setParameterValueById('CatParamLeftHandDown',this.hands.left||((this.mouseRig||this.mouseSprite)&&this.hands.right)||now<Math.max(this.tapUntil||0,this.leftUntil||0)?1:0);c.setParameterValueById('CatParamRightHandDown',this.mouseSprite?(this.hands.mouseLeft||this.hands.mouseRight?1:0):(this.hands.right||now<(this.rightUntil||0)?1:0));c.setParameterValueById('ParamEyeBallX',g.x*.4);c.setParameterValueById('ParamEyeBallY',g.y*.35);if(this.mouseSprite){const scale=this.model.scale.x;this.mouseSprite.position.set(this.model.x+(-160+g.x*12)*scale,this.model.y+(68-g.y*8)*scale);this.mouseSprite.tint=0xffffff;}if(this.mouseRig){c.setParameterValueById('ParamMouseX',g.x*10);c.setParameterValueById('ParamMouseY',g.y*10);c.setParameterValueById('ParamMouseLeftDown',this.hands.mouseLeft?1:0);c.setParameterValueById('ParamMouseRightDown',this.hands.mouseRight?1:0);}return;}
+      if(this.bongo){
+        const left=this.hands.left||((this.mouseRig||this.mouseSprite)&&this.hands.right)||now<Math.max(this.tapUntil||0,this.leftUntil||0);
+        const right=this.mouseSprite?this.hands.mouseLeft||this.hands.mouseRight:this.hands.right||now<(this.rightUntil||0);
+        if(left||!native)c.setParameterValueById('CatParamLeftHandDown',left?1:Math.max(0,animated.handL??0));
+        if(right||!native)c.setParameterValueById('CatParamRightHandDown',right?1:Math.max(0,animated.handR??0));
+        if(!native){c.setParameterValueById('ParamEyeBallX',g.x*.4);c.setParameterValueById('ParamEyeBallY',g.y*.35);}
+        if(this.mouseSprite){const scale=this.model.scale.x;this.mouseSprite.position.set(this.model.x+(-160+g.x*12)*scale,this.model.y+(68-g.y*8)*scale);this.mouseSprite.tint=0xffffff;}
+        if(this.mouseRig){c.setParameterValueById('ParamMouseX',g.x*10);c.setParameterValueById('ParamMouseY',g.y*10);c.setParameterValueById('ParamMouseLeftDown',this.hands.mouseLeft?1:0);c.setParameterValueById('ParamMouseRightDown',this.hands.mouseRight?1:0);}
+        if(this.mouth>0)c.setParameterValueById('ParamMouthOpenY',this.mouth);
+        this.applyActionPose(c,animated);
+        return;
+      }
       c.setParameterValueById('ParamMouthOpenY',this.mouth);
+      if(native)return;
       c.setParameterValueById('ParamAngleX',clamp(Math.sin(t*.55)*3+(this.expression==='thinking'?8:0)+pose.x+g.hx*18,-30,30));
       c.setParameterValueById('ParamAngleZ',clamp(Math.sin(t*.43)*2+pose.z-g.hx*3,-20,20));
       c.setParameterValueById('ParamAngleY',clamp(pose.y+g.hy*12,-30,30));c.setParameterValueById('ParamBodyAngleZ',pose.bodyZ);c.setParameterValueById('ParamBodyAngleX',pose.bodyX);
@@ -61,6 +85,7 @@ export class Avatar {
       c.setParameterValueById('ParamEyeLOpen',blink*pose.eyeL);c.setParameterValueById('ParamEyeROpen',blink*pose.eyeR);
       c.setParameterValueById('ParamMouthForm',this.expression==='happy'?1:pose.smile);
       c.setParameterValueById('ParamBrowLY',this.expression==='surprised'?.6:pose.brow);c.setParameterValueById('ParamBrowRY',this.expression==='surprised'?.6:pose.brow);
+      this.applyActionPose(c,animated);
     });
     this.observer=new ResizeObserver(()=>this.fit());this.observer.observe(this.container);this.fit();
   }
@@ -82,5 +107,70 @@ export class Avatar {
   toggleView(){this.framing=null;this.closeup=!this.closeup;this.fit();return this.closeup;}
   touch(x,y){if(!this.model)return null;if(this.bongo){this.touchNotice=null;if(!this.fishTouch)return null;this.tapUntil=performance.now()+180;return 'fish';}const rect=this.container.getBoundingClientRect(),bounds=this.model.getBounds();const nx=(x-rect.left-bounds.x)/bounds.width,ny=(y-rect.top-bounds.y)/bounds.height;const zone=ny<.28?'head':(nx<.2||nx>.8)?'edge':'body';const result=this.touchSequence.trigger(zone,nx<.5?-1:1,performance.now());this.touchNotice=result.notice;return result.kind;}
   setMouth(value){this.mouth=Math.max(0,Math.min(1,value));}
+  applyActionPose(core,pose){
+    const {minimumValues,maximumValues}=core.getModel().parameters;
+    for(const [channel,value] of Object.entries(pose)){
+      if(!value||channel==='handL'||channel==='handR')continue;
+      for(const id of this.actionParameters[channel]||[]){
+        const index=core.getParameterIndex(id);
+        const current=core.getParameterValueByIndex(index);
+        const eye=channel==='eyeL'||channel==='eyeR';
+        const target=(eye?value<0:value>0)?maximumValues[index]:minimumValues[index];
+        core.setParameterValueByIndex(index,current+(target-current)*Math.abs(value));
+      }
+    }
+  }
+  stopAction(){
+    const action=this.action;
+    this.action=null;
+    if(action?.native){
+      clearTimeout(action.timer);
+      action.manager.off('motionFinish',action.finish);
+      action.manager.stopAllMotions();
+      // Cubism saves the last keyed values as its next base pose.
+      if(action.base){
+        const core=this.model.internalModel.coreModel;
+        action.base.forEach((value,index)=>core.setParameterValueByIndex(index,value));
+        core.saveParameters();
+      }
+    }
+  }
+  stopAutomaticAction(){
+    if(this.action?.automatic)this.stopAction();
+  }
+  async playAction(input,modelVersion=this.modelVersion,automatic=false){
+    if(!this.model||!this.actions)throw new Error('请先加载角色');
+    if(modelVersion!==this.modelVersion)throw new Error('角色已切换，请重新选择动作');
+    const action=validateAction(input,this.actions);
+    this.stopAction();
+    if(!action.motion){
+      this.action={frames:action.frames||gestures[action.preset].frames,start:performance.now(),automatic};
+      return true;
+    }
+    const model=this.model;
+    const manager=model.internalModel.motionManager;
+    const base=Array.from(model.internalModel.coreModel.getModel().parameters.values);
+    const current={native:true,automatic,manager,base,finish:()=>{if(this.action===current)this.stopAction();}};
+    this.action=current;
+    const runtime=PIXI.live2d.config;
+    const sound=runtime.sound;
+    try{
+      // The renderer reads this flag synchronously, before loading the clip.
+      let playing;
+      try{
+        runtime.sound=false;
+        playing=model.motion(action.motion.group,action.motion.index,3);
+      }finally{runtime.sound=sound;}
+      const started=await playing;
+      if(this.action!==current)return false;
+      if(!started)throw new Error('模型原生动作加载失败');
+      manager.once('motionFinish',current.finish);
+      current.timer=setTimeout(current.finish,action.duration);
+      return true;
+    }catch(error){
+      if(this.action===current)this.stopAction();
+      throw error;
+    }
+  }
   perform(expression){this.expression=expression;clearTimeout(this.timer);this.timer=setTimeout(()=>this.expression='neutral',4000);}
 }

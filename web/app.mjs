@@ -5,6 +5,7 @@ import {attachUnderstanding} from './understanding.mjs';
 import {setupMem0} from './mem0-panel.mjs';
 import {attachTouchFeedback} from './touch-feedback.mjs';
 import {Avatar} from './avatar.mjs';
+import {createActionReply} from './actions.mjs';
 import {PCMPlayer} from './pcm.mjs';
 import {HandsFreeCall} from './call.mjs';
 import {openDevice,setupDevices,stopDevices} from './media-devices.mjs';
@@ -19,7 +20,17 @@ function message(role,text){const welcome=$('.welcome');if(welcome)welcome.remov
 function fail(error){status(error.message||String(error),true);}
 function controls(on){busy=on;$('#read').disabled=on||call.active;$('#send').disabled=false;$('#playback').disabled=on;}
 async function audioReady(){if(!context){context=new AudioContext();analyser=context.createAnalyser();analyser.fftSize=512;outputGain=context.createGain();analyser.connect(outputGain);outputGain.connect(context.destination);applyAudio();}await context.resume();}
-function stopLocal(){epoch++;speechController?.abort();chatController?.abort();player?.stop();avatar?.setMouth(0);queue=Promise.resolve();controls(false);$('#avatar-state').textContent='安静陪着你';status('已停止 · 待播语音已清空');}
+function stopLocal(){epoch++;speechController?.abort();chatController?.abort();player?.stop();avatar?.setMouth(0);avatar?.stopAction?.();avatarChannel.postMessage({stopAction:true});queue=Promise.resolve();controls(false);$('#avatar-state').textContent='安静陪着你';status('已停止 · 待播语音已清空');}
+async function playAvatarAction(action,modelVersion,automatic=false){
+  if(automatic&&!config.display.aiActions)throw new Error('AI 动作已关闭');
+  const started=await avatar.playAction(action,modelVersion,automatic);
+  if(started)avatarChannel.postMessage({action,modelVersion,automatic});
+  return started;
+}
+function applyActionSetting(on){
+  $('#ai-actions').checked=on;
+  if(!on)avatar?.stopAutomaticAction();
+}
 async function speak(text,expectedEpoch=epoch){
   if(expectedEpoch!==epoch)return;
   await audioReady();if(expectedEpoch!==epoch)return;
@@ -64,14 +75,25 @@ async function sendChat(submittedText,fromVoice=false){
   message('user',text+(attachedImage?'\n[已附加画面]':''));if(fromComposer)$('#prompt').value='';removeFrame();
   const output=message('assistant','…');const messages=[...(config.memory==='session'?history:[]),{role:'user',content}];let full='',buffer='',complete=false,voiceError;
   chatController=new AbortController();const controller=chatController;status('正在思考…');$('#avatar-state').textContent='正在想一想';avatar?.perform('thinking');
+  const modelVersion=config.display?.aiActions&&avatar?.modelVersion;
+  const actionReply=modelVersion?createActionReply(action=>{
+    if(version===epoch&&!controller.signal.aborted)void playAvatarAction(action,modelVersion,true).catch(()=>{});
+  }):null;
   const voice=part=>{if(version!==epoch||!config.audio.autoSpeak)return;for(let start=0;start<part.length;start+=450){const piece=part.slice(start,start+450).trim();if(piece)enqueueSpeech(piece).catch(e=>voiceError=e.message);}};
+  const appendReply=delta=>{
+    if(!delta)return;
+    full+=delta;buffer+=delta;output.textContent=full;avatarChannel.postMessage({text:full});$('#messages').scrollTop=$('#messages').scrollHeight;
+    // Queue complete clauses while the model is still producing the rest.
+    const boundary=buffer.search(/[。！？!?\n]/);if(boundary>=0){voice(buffer.slice(0,boundary+1));buffer=buffer.slice(boundary+1);}
+    if(buffer.length>=350){voice(buffer.slice(0,350));buffer=buffer.slice(350);}
+  };
   try{
     await audioReady();if(version!==epoch)return;
-    const response=await api('/api/chat',{messages},controller.signal);const reader=response.body.getReader(),decoder=new TextDecoder();let pending='';
-    while(true){const next=await reader.read();if(controller.signal.aborted)return;pending+=decoder.decode(next.value||new Uint8Array(),{stream:!next.done});const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(!line.startsWith('data:'))continue;const data=line.slice(5).trim();if(data==='[DONE]'){complete=true;continue;}if(!data)continue;let frame;try{frame=JSON.parse(data);}catch{continue;}if(frame.error)throw new Error('对话服务返回错误');const delta=frame.choices?.[0]?.delta?.content||'';if(frame.choices?.[0]?.finish_reason)complete=true;if(typeof delta!=='string')continue;full+=delta;buffer+=delta;output.textContent=full;if(delta)avatarChannel.postMessage({text:full});$('#messages').scrollTop=$('#messages').scrollHeight;
-      // Queue complete clauses while the model is still producing the rest.
-      const boundary=buffer.search(/[。！？!?\n]/);if(boundary>=0){voice(buffer.slice(0,boundary+1));buffer=buffer.slice(boundary+1);}if(buffer.length>=350){voice(buffer.slice(0,350));buffer=buffer.slice(350);}
+    const response=await api('/api/chat',{messages,...(modelVersion?{modelVersion}:{})},controller.signal);const reader=response.body.getReader(),decoder=new TextDecoder();let pending='';
+    while(true){const next=await reader.read();if(controller.signal.aborted)return;pending+=decoder.decode(next.value||new Uint8Array(),{stream:!next.done});const lines=pending.split('\n');pending=lines.pop();for(const line of lines){if(!line.startsWith('data:'))continue;const data=line.slice(5).trim();if(data==='[DONE]'){complete=true;continue;}if(!data)continue;let frame;try{frame=JSON.parse(data);}catch{continue;}if(frame.error)throw new Error('对话服务返回错误');const delta=frame.choices?.[0]?.delta?.content||'';if(frame.choices?.[0]?.finish_reason)complete=true;if(typeof delta!=='string')continue;
+      appendReply(actionReply?actionReply.push(delta):delta);
     }if(next.done)break;}
+    if(actionReply&&complete)appendReply(actionReply.push('',true));
     if(!full||!complete)throw new Error('对话流未正常完成');voice(buffer);
     if(version!==epoch)return;
     history=config.memory==='session'?[...history,{role:'user',content:text},{role:'assistant',content:full}].slice(-40):[];
@@ -103,14 +125,20 @@ async function record(){
 }
 
 const claimed=new Set();let taskQueue=Promise.resolve();
-function handleTask(task){if(task.status!=='queued'||claimed.has(task.id))return;claimed.add(task.id);taskQueue=taskQueue.catch(()=>{}).then(async()=>{
+function handleTask(task){if(task.status!=='queued'||claimed.has(task.id))return;claimed.add(task.id);
+const submitted=epoch;
+const run=async()=>{
   const {claimed:ok}=await(await api('/api/tasks/claim',{id:task.id,client})).json();if(!ok)return;
   const version=epoch;let state='completed',error;
-  try{if(task.command==='speak'){message('assistant',task.payload.text);await enqueueSpeech(task.payload.text);if(version!==epoch)state='cancelled';}else if(task.command==='perform')avatar?.perform(task.payload.expression);else if(task.command==='show_message')message('assistant',task.payload.text);else if(task.command==='set_task_status'){$('#avatar-state').textContent=task.payload.text;status(task.payload.text);}}
+  try{if(task.command==='animate'){
+    if(submitted!==epoch||!await playAvatarAction(task.payload.action,task.payload.modelVersion,true))state='cancelled';
+  }else if(task.command==='speak'){message('assistant',task.payload.text);await enqueueSpeech(task.payload.text);if(version!==epoch)state='cancelled';}else if(task.command==='perform')avatar?.perform(task.payload.expression);else if(task.command==='show_message')message('assistant',task.payload.text);else if(task.command==='set_task_status'){$('#avatar-state').textContent=task.payload.text;status(task.payload.text);}}
   catch(e){state='error';error=e.message;}
   await api('/api/tasks/finish',{id:task.id,client,status:state,error}).catch(()=>{});
-}).catch(fail);}
-function connectEvents(){const events=new EventSource('/api/events?client='+client);events.onmessage=messageEvent=>{const event=JSON.parse(messageEvent.data);if(event.type==='config'){if(event.data.connectionMode&&event.data.connectionMode!==config.connectionMode){config.connectionMode=event.data.connectionMode;populate();}if(event.data.display){config.display=event.data.display;$('#show-character').checked=config.display.character;$('#show-orb').checked=config.display.orb;$('#show-understanding').checked=config.display.showUnderstanding;$('#understanding').hidden=!config.display.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));$('#input-feedback').checked=config.display.inputFeedback;avatar?.setInputFeedback(config.display.inputFeedback);$('#fish-touch').checked=!!config.display.fishTouch;avatar?.setFishTouch(config.display.fishTouch);$('#follow-cursor').checked=config.display.followCursor;avatar?.setFollowCursor(config.display.followCursor);}}if(event.type==='stop')stopLocal();if(event.type==='snapshot')for(const task of event.data.tasks)handleTask(task);if(event.type==='task'){handleTask(event.data);const log=$('#event-log');log.textContent=`${event.data.command} · ${event.data.status}\n${log.textContent}`.slice(0,2000);}};events.onerror=()=>status('连接中断，正在重连…',true);}
+};
+if(task.command==='animate')void run().catch(fail);
+else taskQueue=taskQueue.catch(()=>{}).then(run).catch(fail);}
+function connectEvents(){const events=new EventSource('/api/events?client='+client);events.onmessage=messageEvent=>{const event=JSON.parse(messageEvent.data);if(event.type==='config'){if(event.data.connectionMode&&event.data.connectionMode!==config.connectionMode){config.connectionMode=event.data.connectionMode;populate();}if(event.data.display){config.display=event.data.display;applyActionSetting(config.display.aiActions);$('#show-character').checked=config.display.character;$('#show-orb').checked=config.display.orb;$('#show-understanding').checked=config.display.showUnderstanding;$('#understanding').hidden=!config.display.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));$('#input-feedback').checked=config.display.inputFeedback;avatar?.setInputFeedback(config.display.inputFeedback);$('#fish-touch').checked=!!config.display.fishTouch;avatar?.setFishTouch(config.display.fishTouch);$('#follow-cursor').checked=config.display.followCursor;avatar?.setFollowCursor(config.display.followCursor);}}if(event.type==='stop')stopLocal();if(event.type==='snapshot')for(const task of event.data.tasks)handleTask(task);if(event.type==='task'){handleTask(event.data);const log=$('#event-log');log.textContent=`${event.data.command} · ${event.data.status}\n${log.textContent}`.slice(0,2000);}};events.onerror=()=>status('连接中断，正在重连…',true);}
 
 async function refreshMemory(restore=false){
  const m=await(await api('/api/memory')).json();memoryGeneration=m.generation;$('#memory-summary').value=m.summary;$('#memory-status').textContent=`已保存 ${m.messages.length/2} 轮对话、${m.notes.length} 条明确记忆`+(m.summaryError?' · 摘要更新失败，可重试':'');$('#memory-notes').replaceChildren();
@@ -121,12 +149,12 @@ async function refreshRoute(){try{const s=await(await api('/api/connection-statu
 async function switchRoute(mode){const old=config.connectionMode;if(mode===old)return;$('#chat-route').disabled=true;call.stop();stopLocal();try{config=await(await api('/api/config',{connectionMode:mode})).json();history=[];populate();await refreshRoute();status('已切换聊天方式，后续消息使用新连接；草稿已保留。');}catch(e){$('#chat-route').value=old;fail(e);}finally{$('#chat-route').disabled=false;}}
 async function init(){
   setupSharedMemory(api);
-  const bootstrap=await(await api('/api/bootstrap')).json();config=bootstrap.config;populate();checkVoice();$('#api-address').textContent=bootstrap.integration.baseUrl;$('#token-path').textContent=bootstrap.integration.tokenFile;
+  const bootstrap=await(await api('/api/bootstrap')).json();config=bootstrap.config;populate();applyActionSetting(config.display.aiActions);checkVoice();$('#api-address').textContent=bootstrap.integration.baseUrl;$('#token-path').textContent=bootstrap.integration.tokenFile;
   avatar=new Avatar($('#avatar'));avatar.setInputFeedback(config.display.inputFeedback);avatar.setFishTouch(config.display.fishTouch);avatar.setFollowCursor(config.display.followCursor);attachTouchFeedback($('#avatar'),avatar);avatar.load().then(()=>$('#avatar-loading').remove()).catch(error=>{$('#avatar-loading').textContent=error.message;});
   attachUnderstanding($('#understanding'));connectEvents();animate();await refreshMemory(true);
   setupMem0({api,enabled:config.memory==='mem0',onEnable:async()=>{if(config.connectionMode==='external')throw new Error('请先切换到直接连接模型 API 模式');config=await(await api('/api/config',{memory:'mem0'})).json();populate();await refreshMemory(true);}});
   await setupDevices(()=>{if(recorder?.state==='recording'){recorder.onstop=null;recorder.stop();clearTimeout(recordTimer);$('#record').classList.remove('recording');$('#record').setAttribute('aria-label','录音转文字');}endCall();});
-  window.desktop?.onVisibility(value=>{config.display=value;$('#show-character').checked=value.character;$('#show-orb').checked=value.orb;$('#show-understanding').checked=value.showUnderstanding;$('#understanding').hidden=!value.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));$('#input-feedback').checked=value.inputFeedback;avatar?.setInputFeedback(value.inputFeedback);$('#fish-touch').checked=!!value.fishTouch;avatar?.setFishTouch(value.fishTouch);$('#follow-cursor').checked=value.followCursor;avatar?.setFollowCursor(value.followCursor);});
+  window.desktop?.onVisibility(value=>{config.display=value;applyActionSetting(value.aiActions);$('#show-character').checked=value.character;$('#show-orb').checked=value.orb;$('#show-understanding').checked=value.showUnderstanding;$('#understanding').hidden=!value.showUnderstanding;window.dispatchEvent(new Event('companion-understanding'));$('#input-feedback').checked=value.inputFeedback;avatar?.setInputFeedback(value.inputFeedback);$('#fish-touch').checked=!!value.fishTouch;avatar?.setFishTouch(value.fishTouch);$('#follow-cursor').checked=value.followCursor;avatar?.setFollowCursor(value.followCursor);});
   window.desktop?.onPetChat(async request=>{
     const reply=data=>avatarChannel.postMessage({replyId:request.id,...data});
     reply({state:'accepted'});
@@ -142,7 +170,37 @@ async function init(){
   $('#send').onclick=()=>sendChat().catch(fail);$('#prompt').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))sendChat().catch(fail);};
   $('#stop').onclick=()=>{call.stop();stopLocal();api('/api/stop',{}).catch(fail);};
   $('#clear-chat').onclick=async()=>{call.stop();stopLocal();try{if(config.connectionMode==='direct'&&['basic','mem0'].includes(config.memory)){const m=await(await api('/api/memory',{action:'clear_history'})).json();memoryGeneration=m.generation;}history=[];$('#messages').replaceChildren();removeFrame();await refreshMemory();status('会话和摘要已清空，明确记忆保留');}catch(e){fail(e);}};
-  $('#expression').onclick=()=>{avatar.perform('happy');avatarChannel.postMessage({expression:'happy'});};
+  const actionDialog=$('#action-dialog');
+  const actionSelect=$('#action-select');
+  $('#expression').onclick=()=>{
+    if(!avatar.actions){status('请先加载角色',true);return;}
+    const groups=[
+      ['内置动作',avatar.actions.presets.map(({id,name})=>[name,{preset:id}])],
+      ['模型自带动作',avatar.actions.native.map(({group,index,name})=>[`${name} · ${group}`,{motion:{group,index}}])]
+    ];
+    actionSelect.replaceChildren();
+    for(const [label,items] of groups){
+      if(!items.length)continue;
+      const group=document.createElement('optgroup');group.label=label;
+      for(const [name,action] of items)group.append(new Option(name,JSON.stringify(action)));
+      actionSelect.append(group);
+    }
+    if(!actionSelect.options.length){status('当前角色没有可预览的动作',true);return;}
+    actionDialog.showModal();
+  };
+  $('#preview-action').onclick=()=>{
+    actionDialog.close();
+    void playAvatarAction(JSON.parse(actionSelect.value),avatar.modelVersion).catch(fail);
+  };
+  $('#close-actions').onclick=()=>actionDialog.close();
+  $('#ai-actions').onchange=async()=>{
+    const value=$('#ai-actions').checked;
+    try{
+      if(window.desktop)await desktop.visibility({aiActions:value});
+      else await api('/api/config',{display:{aiActions:value}});
+      $('#preferences-status').textContent=value?'AI 动作已开启':'AI 动作已关闭';
+    }catch(error){applyActionSetting(config.display.aiActions);$('#preferences-status').textContent=error.message;}
+  };
   const viewButton=document.createElement('button');viewButton.className='pill';viewButton.textContent='近景';viewButton.title='切换近景与全身';viewButton.onclick=()=>viewButton.textContent=avatar.toggleView()?'全身':'近景';$('.stage-top').insertBefore(viewButton,$('#expression'));
   document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>{if(call.active)return;$('#prompt').value=b.dataset.prompt;enqueueSpeech(b.dataset.prompt).catch(()=>{});});
   $('#playback').onchange=()=>api('/api/config',{playback:$('#playback').value}).then(r=>r.json()).then(c=>{config=c;populateAudio();}).catch(fail);
