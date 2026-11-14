@@ -4,12 +4,11 @@ const {spawnSync}=require('node:child_process');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 if(Number(process.versions.node.split('.')[0])<24)throw new Error('Please install Node.js 24 or newer.');
-if(process.platform!=='win32')throw new Error('This preview setup supports Windows only.');
 function run(command,args,cwd=root){const result=spawnSync(command,args,{cwd,stdio:'inherit',windowsHide:true});if(result.error)throw result.error;if(result.status!==0)process.exit(result.status||1);}
 run(process.execPath,['node_modules/electron/install.js']);
-run(process.execPath,['script/install.js'],path.join(root,'node_modules/onnxruntime-node'));
+require('onnxruntime-node'); // The CPU runtime ships in the package on all supported platforms.
 require('sharp'); // Current sharp uses platform binaries supplied by npm.
 run(process.execPath,['scripts/prepare-icons.cjs']);
-run('python',['scripts/patch_renderer.py']);
+run(process.execPath,['scripts/patch-renderer.cjs']);
 const db=new (require('better-sqlite3'))(':memory:');db.prepare('SELECT 1').get();db.close();
 console.log('Desktop runtime, renderer and database are ready. Run npm start.');

@@ -2,6 +2,7 @@ const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('desktop',{
   welcomeSeen:()=>ipcRenderer.invoke('desktop:welcome-seen'),
   state:()=>ipcRenderer.invoke('desktop:state'),
+  features:()=>ipcRenderer.invoke('desktop:features'),
   onCursor:callback=>{const listener=(_event,value)=>callback(value);ipcRenderer.on('desktop:cursor',listener);return ()=>ipcRenderer.removeListener('desktop:cursor',listener);},
   mediaPermissions:patch=>ipcRenderer.invoke('desktop:media-permissions',patch),
   pet:visible=>ipcRenderer.invoke('desktop:pet',!!visible),

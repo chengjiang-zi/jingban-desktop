@@ -4,4 +4,5 @@ body.bubbles-off #bubble{display:none}.touch-heart{position:absolute;z-index:6;p
 
 body.character-off #avatar,body.character-off #bubble,body.character-off #pet-composer{display:none}body.orb-off .orb-dock{display:none}
 
+#native-drag{-webkit-app-region:drag;app-region:drag;cursor:move;padding:9px 10px;color:#526889;font-size:12px;user-select:none}
 #orb-menu{max-height:calc(100vh - 105px);overflow-y:auto}#model-library{border:1px solid #dce5f4;border-radius:8px;padding:7px;color:#526889;background:white}

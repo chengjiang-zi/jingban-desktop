@@ -13,12 +13,18 @@ function finishRequest(error){clearTimeout(requestTimer);requestId=null;send.dis
 channel.onmessage=e=>{const d=e.data;if(typeof d.mouth==='number'){avatar.setMouth(d.mouth);localFrame=last=Date.now();}if(d.expression)avatar.perform(d.expression);if(d.stopAction)avatar.stopAction();if(d.action&&(!d.automatic||display.aiActions))void avatar.playAction(d.action,d.modelVersion,d.automatic).catch(()=>{});if(d.text)showBubble(d.text);if(d.speaking&&document.body.classList.contains('bubble-visible')){clearTimeout(bubbleTimer);bubbleTimer=setTimeout(()=>document.body.classList.remove('bubble-visible'),6000);}if(d.replyId===requestId&&requestId){if(d.state==='accepted'){clearTimeout(requestTimer);requestTimer=setTimeout(()=>finishRequest('等待回复超时，请在主界面检查服务。'),240000);}else finishRequest(d.error);}};
 function closeMenu(){menu.hidden=true;orb.setAttribute('aria-expanded','false');}
 function toggleMenu(){menu.hidden=!menu.hidden;orb.setAttribute('aria-expanded',String(!menu.hidden));}
-orb.onpointerdown=e=>{if(e.button!==0||dragging)return;e.preventDefault();dragging=true;orb.setPointerCapture(e.pointerId);document.body.classList.add('dragging');orb.classList.add('dragging');closeMenu();window.desktop?.dragPet('start',{x:e.clientX,y:e.clientY}).catch(error=>showBubble(error.message));};
+let nativeDrag=false;
+window.desktop?.features?.().then(features=>{
+  nativeDrag=features.nativeDrag;
+  if(nativeDrag){$('#native-drag').hidden=false;orb.title='点击打开菜单 · 从菜单拖动桌宠';orb.setAttribute('aria-label','打开桌宠菜单');}
+  $('#pass').hidden=features.portalCapture||!features.loginItem;
+}).catch(()=>{});
+orb.onpointerdown=e=>{if(nativeDrag||e.button!==0||dragging)return;e.preventDefault();dragging=true;orb.setPointerCapture(e.pointerId);document.body.classList.add('dragging');orb.classList.add('dragging');closeMenu();window.desktop?.dragPet('start',{x:e.clientX,y:e.clientY}).catch(error=>showBubble(error.message));};
 async function endDrag(cancel=false){if(!dragging)return;dragging=false;let moved=true;try{moved=await window.desktop?.dragPet('end');}finally{document.body.classList.remove('dragging');orb.classList.remove('dragging');}if(!cancel&&!moved)toggleMenu();}
 orb.onpointerup=()=>endDrag();orb.onpointercancel=()=>endDrag(true);orb.onlostpointercapture=()=>endDrag(true);window.addEventListener('blur',()=>endDrag(true));
-orb.onclick=e=>{if(e.detail===0)toggleMenu();};
+orb.onclick=e=>{if(nativeDrag||e.detail===0)toggleMenu();};
 $('#home').onclick=()=>window.desktop?.main();
-$('#pass').onclick=()=>{closeMenu();window.desktop?.passThrough(true);showBubble('已开启鼠标穿透，右下角托盘可恢复操作。');};
+$('#pass').onclick=async()=>{closeMenu();try{await window.desktop?.passThrough(true);showBubble('已开启鼠标穿透，可从系统托盘恢复操作。');}catch(error){showBubble(error.message);}};
 $('#type').onclick=()=>{closeMenu();document.body.classList.add('typing');input.focus();};
 for(const button of document.querySelectorAll('[data-frame]'))button.onclick=()=>{avatar.setFraming(button.dataset.frame);for(const b of document.querySelectorAll('[data-frame]'))b.setAttribute('aria-pressed',String(b===button));};
 async function resize(factor){if(!window.desktop){showBubble('请在桌面软件中调整大小');return;}try{const r=await window.desktop.scalePet(factor);if(!r.changed)showBubble('已经达到当前屏幕的大小限制。');}catch(e){showBubble(e.message);}}

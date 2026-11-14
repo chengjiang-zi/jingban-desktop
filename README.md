@@ -8,7 +8,7 @@
 
 [下载 Windows Beta（内置小鱼）](https://github.com/chengjiang-zi/jingban-desktop/releases/download/v0.2.2-beta.1/jingban-0.2.2-beta.1-windows-x64.exe) · [完整使用手册](docs/USER-GUIDE.md) · [模型下载与放置](docs/MODELS-AND-SETUP.md) · [DSH 插件](integrations/dsh-plugin/README.md)
 
-**0.2.2-beta.1 · Beta 测试版，非正式版本 · 源码与 Windows 体验包。** 目前仅支持 Windows；macOS 和 Linux 暂不支持。内置小鱼模型；首次使用仍需自行配置 Cubism Core 和所需服务，不是开箱即用的完整视频通话产品。公开仓库包含小鱼模型、大肥鱼卡通应用图标及通用备用图标，不包含普通大肥鱼角色模型、声音权重或 Cubism Core。图标素材不纳入代码 MIT，见 [素材说明](web/assets/README.md)。
+**0.2.2-beta.1 · Beta 测试版，非正式版本 · 当前公开下载为 Windows 体验包。** macOS Apple Silicon 和 Linux x64 的源码构建及功能差异见[跨平台预览说明](docs/CROSS-PLATFORM.md)。内置小鱼模型；首次使用仍需自行配置 Cubism Core 和所需服务，不是开箱即用的完整视频通话产品。公开仓库包含小鱼模型、大肥鱼卡通应用图标及通用备用图标，不包含普通大肥鱼角色模型、声音权重或 Cubism Core。图标素材不纳入代码 MIT，见 [素材说明](web/assets/README.md)。
 
 作者：**澄江子** · B站：**澄江子**。软件代码完全开源免费，采用 MIT 许可；第三方素材与服务不因此改变许可或变成免费服务。
 
@@ -69,7 +69,7 @@ BongoCat 全局输入检测仅用于即时动作和键位反馈；键位名称�
 
 ## 从源码运行
 
-Windows 10/11，安装 **Node.js 24+、Python 3 和 Git**，并加入 PATH。首次安装需要联网下载依赖。
+安装 **Node.js 24+、Python 3 和 Git**，并加入 PATH。Windows 10/11 可按下方操作，macOS 和 Linux 的构建命令见[跨平台预览说明](docs/CROSS-PLATFORM.md)。首次安装需要联网下载依赖。
 
 ```powershell
 git clone https://github.com/chengjiang-zi/jingban-desktop.git
@@ -104,7 +104,7 @@ npm run pack    # 构建 Windows 目录版
 
 换对话模型保留事实；换检索模型会建立独立库，可在面板迁移并重新生成向量。导出采用 Mem0 的 `results` JSON，导入兼容该对象及记录数组；不包含密钥、原始向量或完整聊天，不承诺所有平台无损互通。清空会话保留长期记忆，删除全部本地记忆会清空各本地检索配置的记忆库。自动提取可能遗漏或保留过时信息，可手动修正。
 
-通过仓库启动脚本运行时，数据保存在 `.local`；其他启动方式使用界面显示的数据目录。桌面密钥由 Windows 加密保存，聊天与记忆文件仍是本地可读数据。纯网页模式密钥只保留在进程内存。录音和画面不默认落盘；发送内容会交给你配置的服务。仅开启画面预览不会自动发给模型。
+通过仓库启动脚本运行时，数据保存在 `.local`；其他启动方式使用界面显示的数据目录。桌面密钥使用系统密钥存储；没有可用系统密钥存储时和网页模式一样，只留在进程内存。聊天与记忆文件仍是本地可读数据。录音和画面不默认落盘；发送内容会交给你配置的服务。仅开启画面预览不会自动发给模型。
 
 ## 外部智能体接入
 

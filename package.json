@@ -10,12 +10,17 @@
     "test": "node --test test/*.test.mjs",
     "pack": "electron-builder --dir",
     "mcp": "node integrations/mcp.mjs",
-    "renderer:patch": "python scripts/patch_renderer.py",
+    "renderer:patch": "node scripts/patch-renderer.cjs",
     "prestart": "node scripts/prepare-icons.cjs && npm run renderer:patch",
     "prepack": "node scripts/prepare-icons.cjs && npm run renderer:patch",
     "postpack": "node scripts/set-app-icon.cjs",
     "setup": "node scripts/setup.cjs",
-    "pack:portable": "electron-builder --prepackaged dist/win-unpacked --win portable --publish never"
+    "pack:portable": "electron-builder --prepackaged dist/win-unpacked --win portable --publish never",
+    "prepack:mac": "npm run renderer:patch",
+    "pack:mac": "electron-builder --mac dmg --publish never",
+    "prepack:linux": "npm run renderer:patch",
+    "pack:linux": "electron-builder --linux AppImage --publish never",
+    "smoke:desktop": "node scripts/smoke-desktop.cjs"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",
@@ -49,9 +54,32 @@
     "win": {
       "target": "dir",
       "signAndEditExecutable": false,
-      "icon": "web/assets/app.ico"
+      "icon": "web/assets/app.ico",
+      "extraFiles": [
+        {
+          "from": "docs/WINDOWS-START.txt",
+          "to": "开始使用.txt"
+        }
+      ]
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "web/assets/avatar-orb.png",
+      "artifactName": "jingban-${version}-mac-${arch}.${ext}",
+      "category": "public.app-category.utilities",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "鲸伴在你启用通话或录音时使用麦克风。",
+        "NSCameraUsageDescription": "鲸伴在你启用摄像头预览时使用摄像头。"
+      }
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "web/assets/avatar-orb.png",
+      "artifactName": "jingban-${version}-linux-${arch}.${ext}",
+      "category": "Utility"
     },
     "executableName": "jingban",
+    "npmRebuild": false,
     "extraFiles": [
       {
         "from": "docs",
@@ -70,15 +98,12 @@
         "to": "LICENSE"
       },
       {
-        "from": "docs/WINDOWS-START.txt",
-        "to": "开始使用.txt"
-      },
-      {
         "from": "local-asr",
         "to": "local-asr",
         "filter": [
           "*.py",
           "*.ps1",
+          "*.sh",
           "*.txt",
           "*.md"
         ]

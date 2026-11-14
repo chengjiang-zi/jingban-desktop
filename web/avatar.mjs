@@ -5,12 +5,33 @@ import {gazeTarget,stepGaze,clamp} from './gaze.mjs';
 import {actionCatalog,actionChannels,gestures,sampleAction,validateAction} from './actions.mjs';
 export class Avatar {
   constructor(container){this.container=container;this.mouth=0;this.expression='neutral';this.followCursor=true;this.gaze={x:0,y:0,hx:0,hy:0};this.touchSequence=new TouchSequence();this.hands={left:false,right:false};
-    window.desktop?.onHands(value=>{this.hands=value;this.keyFeedback?.update(value.keys||[]);const now=performance.now();if(value.left||((this.mouseRig||this.mouseSprite)&&value.right))this.leftUntil=now+100;if(value.right)this.rightUntil=now+100;if(value.mouseLeft)this.mouseLeftUntil=now+100;if(value.mouseRight)this.mouseRightUntil=now+100;});
-    document.addEventListener('keydown',e=>{if(!window.desktop?.onHands)this.hands[e.code.match(/^(Key[QWERTASDFGZXCVB]|Digit[1-5])$/)?'left':'right']=true;});
-    document.addEventListener('keyup',()=>{if(!window.desktop?.onHands)this.hands={left:false,right:false};});
-    window.addEventListener('blur',()=>this.hands={left:false,right:false});
-    if(window.desktop?.onCursor)window.desktop.onCursor(point=>{this.gazePoint=point.active?point:null;this.gazeAt=performance.now();});
-    else{document.addEventListener('pointermove',e=>{this.gazePoint={x:e.clientX,y:e.clientY};});document.documentElement.addEventListener('pointerleave',()=>this.gazePoint=null);}
+    const updateHands=value=>{this.hands=value;this.keyFeedback?.update(value.keys||[]);const now=performance.now();if(value.left||((this.mouseRig||this.mouseSprite)&&value.right))this.leftUntil=now+100;if(value.right)this.rightUntil=now+100;if(value.mouseLeft)this.mouseLeftUntil=now+100;if(value.mouseRight)this.mouseRightUntil=now+100;};
+    this.globalCursor=false;
+    const features=window.desktop?.features?.()??Promise.resolve({});
+    features.catch(()=>({})).then(({globalInput,globalCursor})=>{
+      if(globalInput)window.desktop.onHands(value=>{if(value.error){this.setupLocalInput(updateHands);}updateHands(value);});
+      else this.setupLocalInput(updateHands);
+      this.globalCursor=!!globalCursor;
+      if(globalCursor)window.desktop.onCursor(point=>{this.gazePoint=point.active?point:null;this.gazeAt=performance.now();});
+      else{
+        document.addEventListener('pointermove',e=>{this.gazePoint={x:e.clientX,y:e.clientY};});
+        document.documentElement.addEventListener('pointerleave',()=>this.gazePoint=null);
+      }
+    });
+    window.addEventListener('blur',()=>{updateHands({left:false,right:false});if(!this.globalCursor)this.gazePoint=null;});
+  }
+  setupLocalInput(update){
+    if(this.localInput)return;
+    this.localInput=true;
+    const keys=new Set(),buttons=new Set();
+    const isLeft=code=>/^(Key[QWERTASDFGZXCVB]|Digit[1-5])$/.test(code);
+    const label=code=>code.replace(/^Digit([0-9])$/,'Num$1').replace(/^Arrow(Left|Right|Up|Down)$/,'$1Arrow');
+    const send=()=>update({left:[...keys].some(isLeft),right:[...keys].some(code=>!isLeft(code)),mouseLeft:buttons.has(0),mouseRight:buttons.has(2),keys:[...keys].map(label)});
+    document.addEventListener('keydown',event=>{if(event.code){keys.add(event.code);send();}});
+    document.addEventListener('keyup',event=>{keys.delete(event.code);send();});
+    document.addEventListener('pointerdown',event=>{buttons.add(event.button);send();});
+    document.addEventListener('pointerup',event=>{buttons.delete(event.button);send();});
+    for(const event of ['blur','pointercancel'])window.addEventListener(event,()=>{keys.clear();buttons.clear();send();});
   }
   setInputFeedback(on){this.inputFeedback=!!on;this.keyFeedback?.setEnabled(on);}
   setFishTouch(on){this.fishTouch=!!on;}
@@ -51,7 +72,7 @@ export class Avatar {
     internal.on('beforeModelUpdate',()=>{
       const t=performance.now()/1000,c=internal.coreModel;
       const now=performance.now(),rect=this.container.getBoundingClientRect(),bounds=this.model.getBounds();
-      const point=this.followCursor&&(!window.desktop?.onCursor||now-(this.gazeAt||0)<300)?this.gazePoint:null;
+      const point=this.followCursor&&(!this.globalCursor||now-(this.gazeAt||0)<300)?this.gazePoint:null;
       const target=gazeTarget(point,{x:rect.left+bounds.x,y:rect.top+bounds.y,width:bounds.width,height:bounds.height});
       this.gaze=stepGaze(this.gaze,target,(now-(this.gazeTime??now))/1000);this.gazeTime=now;
       const g=this.gaze;this.keyFeedback?.tick(this.model);

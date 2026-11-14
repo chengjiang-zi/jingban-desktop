@@ -3,6 +3,7 @@ const path=require('node:path');
 const fs=require('node:fs');
 const os=require('node:os');
 const root=path.resolve(__dirname,'..');
+if(process.platform!=='win32')process.exit(0);
 // The bundled resource editor does not handle non-ASCII target filenames.
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'jingban-icon-'));
 const target=path.join(root,process.env.JINGBAN_BUILD_OUTPUT||'dist','win-unpacked/jingban.exe');
