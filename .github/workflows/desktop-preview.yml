@@ -25,7 +25,7 @@ jobs:
             artifact: dist/win-unpacked/
           - target: macos-arm64
             runner: macos-15
-            build: npm run pack:mac -- --arm64 --config.mac.identity=- --config.mac.hardenedRuntime=false
+            build: npm run pack:mac -- --arm64
             smoke: npm run smoke:desktop -- --packaged
             artifact: dist/*.dmg
           - target: linux-x64

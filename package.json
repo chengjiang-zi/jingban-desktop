@@ -69,6 +69,8 @@
       "icon": "web/assets/avatar-orb.png",
       "artifactName": "jingban-${version}-mac-${arch}.${ext}",
       "category": "public.app-category.utilities",
+      "identity": "-",
+      "hardenedRuntime": false,
       "extendInfo": {
         "NSMicrophoneUsageDescription": "鲸伴在你启用通话或录音时使用麦克风。",
         "NSCameraUsageDescription": "鲸伴在你启用摄像头预览时使用摄像头。"
@@ -84,7 +86,7 @@
     },
     "executableName": "jingban",
     "npmRebuild": false,
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "docs",
         "to": "docs"
