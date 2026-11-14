@@ -18,7 +18,7 @@ function packagedExecutable() {
   return app;
 }
 
-const binary = packaged ? packagedExecutable() : require('electron');
+const binary = packaged ? process.env.JINGBAN_SMOKE_EXECUTABLE || packagedExecutable() : require('electron');
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'jingban-smoke-'));
 try {
   const args = [...(packaged ? [] : [root]), '--jingban-smoke-test'];
@@ -30,7 +30,7 @@ try {
     windowsHide: true,
   });
   if (result.error) throw result.error;
-  assert.equal(result.status, 0, 'Electron failed to start or did not exit cleanly');
+  assert.equal(result.status, 0, `Electron failed to start or did not exit cleanly (${result.signal ?? 'no signal'})`);
   const report = JSON.parse(fs.readFileSync(path.join(directory, 'desktop-smoke-result.json'), 'utf8'));
   assert.equal(report.packaged, packaged);
   assert.equal(report.platform, process.platform);

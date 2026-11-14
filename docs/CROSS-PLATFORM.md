@@ -30,11 +30,11 @@ npm start
 ```sh
 npm test
 npm run pack:mac -- --arm64       # Apple Silicon，生成 dist/*.dmg
-npm run pack:linux -- --x64       # Ubuntu x64，生成 dist/*.AppImage
+npm run pack:linux -- --x64       # Ubuntu x64，生成 dist/*.deb
 npm run smoke:desktop -- --packaged
 ```
 
-macOS 打开 DMG 后将应用拖入「应用程序」。Linux 如需手动为 AppImage 添加执行权限，执行 `chmod +x ./jingban-*-linux-x64.AppImage` 后再运行文件。
+macOS 打开 DMG 后将应用拖入「应用程序」。Ubuntu 执行 `sudo apt install ./jingban-*-linux-*.deb`，然后从应用菜单启动鲸伴。若要测试已安装的 Linux 包，运行 `JINGBAN_SMOKE_EXECUTABLE=/usr/bin/jingban npm run smoke:desktop -- --packaged`。
 
 CI 测试会启动打包后的应用，检查主窗口、悬浮窗缩放、SQLite、ONNX Runtime、内置模型入口及渲染脚本。Linux CI 使用虚拟 X11 显示器。真实的麦克风、摄像头、屏幕共享、Wayland 窗口操作及 macOS 登录启动仍需要相应桌面环境验收。Live2D Core 未随安装包分发，自动验收只检查模型资源和渲染脚本能否加载。
 

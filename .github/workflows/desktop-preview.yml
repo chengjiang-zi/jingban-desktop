@@ -31,8 +31,8 @@ jobs:
           - target: linux-x64
             runner: ubuntu-24.04
             build: npm run pack:linux -- --x64
-            smoke: xvfb-run -a npm run smoke:desktop -- --packaged
-            artifact: dist/*.AppImage
+            smoke: JINGBAN_SMOKE_EXECUTABLE=/usr/bin/jingban xvfb-run -a npm run smoke:desktop -- --packaged
+            artifact: dist/*.deb
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
@@ -51,6 +51,9 @@ jobs:
       - run: npm run setup
       - run: npm test
       - run: ${{ matrix.build }}
+      - name: Install the Linux preview package
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y ./dist/*.deb
       - run: ${{ matrix.smoke }}
       - uses: actions/upload-artifact@v4
         with:

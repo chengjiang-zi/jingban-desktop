@@ -3,6 +3,8 @@
   "version": "0.2.2-beta.1",
   "private": true,
   "description": "鲸伴 Beta — 免费开源的模块化桌面伙伴",
+  "homepage": "https://github.com/chengjiang-zi/jingban-desktop",
+  "desktopName": "jingban",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -19,7 +21,7 @@
     "prepack:mac": "npm run renderer:patch",
     "pack:mac": "electron-builder --mac dmg --publish never",
     "prepack:linux": "npm run renderer:patch",
-    "pack:linux": "electron-builder --linux AppImage --publish never",
+    "pack:linux": "electron-builder --linux deb --publish never",
     "smoke:desktop": "node scripts/smoke-desktop.cjs"
   },
   "devDependencies": {
@@ -73,9 +75,11 @@
       }
     },
     "linux": {
-      "target": "AppImage",
+      "target": "deb",
       "icon": "web/assets/avatar-orb.png",
       "artifactName": "jingban-${version}-linux-${arch}.${ext}",
+      "maintainer": "澄江子 <283333993+chengjiang-zi@users.noreply.github.com>",
+      "syncDesktopName": true,
       "category": "Utility"
     },
     "executableName": "jingban",
