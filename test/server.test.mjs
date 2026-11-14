@@ -71,7 +71,9 @@ test('static modules have correct MIME and traversal is rejected',async t=>{
   const app=await fixture(t);const module=await fetch(app.origin+'/app.mjs');assert.match(module.headers.get('content-type'),/javascript/);await module.text();
   assert.throws(()=>safePath(path.resolve('models'),'../secrets'));
   assert.throws(()=>safePath(path.resolve('models'),'../../secret'));
-  const response=await fetch(app.origin+'/%2e%2e%5cpackage.json');assert.equal(response.status,400);
+  for(const suffix of ['/%2e%2e%5cpackage.json','/%2e%2e%2fpackage.json']){
+    const response=await fetch(app.origin+suffix);assert.equal(response.status,400);
+  }
 });
 test('task claim is exclusive, request IDs are idempotent, cancellation cannot become completion',()=>{
   const events=[];const tasks=new Tasks((...event)=>events.push(event));

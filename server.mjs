@@ -70,6 +70,7 @@ export async function startServer({port=61950,directory=path.join(root,'.local')
       if(req.headers.host!==new URL(origin).host) return json(res,403,{error:'无效 Host'});
       if(req.headers.origin && req.headers.origin!==origin)return json(res,403,{error:'仅允许本机软件来源'});
       const url=new URL(req.url,origin);let route=decodeURIComponent(url.pathname);
+      if(route.includes('\\')||route.split('/').includes('..'))throw new Error('非法文件路径');
       const api=route.startsWith('/api/')||route.startsWith('/v1/');
       const ui=equal(req.headers['x-companion-token'],uiToken)||equal(req.headers.cookie?.match(/(?:^|;\s*)companion=([^;]+)/)?.[1],uiToken);
       const external=store.get().integrationEnabled&&equal(req.headers.authorization,`Bearer ${store.token}`);
